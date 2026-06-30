@@ -62,21 +62,33 @@ export default function ReportesPage() {
   const exportToExcel = async () => {
     setExporting(true);
     try {
-      const params = new URLSearchParams();
-      if (fechas.fechaInicio) {
-        params.append("fechaInicio", fechas.fechaInicio);
-      }
-      if (fechas.fechaFin) {
-        params.append("fechaFin", `${fechas.fechaFin}T23:59:59`);
-      } else if (fechas.fechaInicio) {
-        params.append("fechaFin", `${fechas.fechaInicio}T23:59:59`);
-      }
-      params.append("limit", "500");
+      const dateParams = buildDateParams();
 
-      const response = await api.get(`/defectos?${params}`);
-      const registros = (response.data.data?.registros || []).sort(
-        (a, b) => new Date(a.fecha_registro) - new Date(b.fecha_registro),
-      );
+      // 1) Traer TODOS los registros del periodo paginando, para no perder
+      //    días por el límite de la consulta (orden ascendente por fecha).
+      const registros = [];
+      const pageSize = 500;
+      let offset = 0;
+      let total = Infinity;
+      while (offset < total) {
+        const resp = await api.get(
+          `/defectos?${dateParams}&orderBy=fecha_registro&orderDir=ASC&limit=${pageSize}&offset=${offset}`,
+        );
+        const pageRegistros = resp.data.data?.registros || [];
+        if (pageRegistros.length === 0) break;
+        registros.push(...pageRegistros);
+        total = resp.data.data?.pagination?.total ?? registros.length;
+        offset += pageSize;
+      }
+
+      // 2) Traer resumen por turno y top defectos del MISMO periodo
+      //    (no del estado en pantalla, que puede ser de otra fecha).
+      const [resumenRes, topRes] = await Promise.all([
+        api.get(`/defectos/resumen-turno?${dateParams}`),
+        api.get(`/defectos/top-defectos?limit=10&${dateParams}`),
+      ]);
+      const resumenData = resumenRes.data?.data?.resumen || [];
+      const topData = topRes.data?.data?.topDefectos || [];
 
       // Crear workbook
       const workbook = new ExcelJS.Workbook();
@@ -131,9 +143,9 @@ export default function ReportesPage() {
         fgColor: { argb: "FF49A090" },
       };
 
-      resumenTurno.forEach((r) => {
+      resumenData.forEach((r) => {
         wsResumen.addRow({
-          fecha: formatFecha(r.fecha_registro),
+          fecha: formatFecha(r.fecha),
           turno: formatTurno(r.turno),
           registros: r.total_registros,
           pares: r.total_pares_rechazados,
@@ -156,7 +168,7 @@ export default function ReportesPage() {
         fgColor: { argb: "FF95B849" },
       };
 
-      topDefectos.forEach((d, i) => {
+      topData.forEach((d, i) => {
         wsTop.addRow({
           posicion: i + 1,
           defecto: d.defecto,
@@ -373,7 +385,7 @@ export default function ReportesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {resumenTurno.slice(0, 15).map((item, index) => (
+                  {resumenTurno.map((item, index) => (
                     <tr key={index}>
                       <td className="py-2 text-sm text-gray-900">
                         {formatFecha(item.fecha)}
