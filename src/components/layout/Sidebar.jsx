@@ -12,6 +12,13 @@ import {
   ChevronRight,
   QrCode,
   PackageCheck,
+  FileSpreadsheet,
+  Factory,
+  Mail,
+  Upload,
+  LayoutGrid,
+  Boxes,
+  FlaskConical,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -24,6 +31,15 @@ const iconMap = {
   Catálogos: Settings,
   "Validación QR": QrCode,
   "Recepción Cajas": PackageCheck,
+  "Carga Masiva de Artículos": FileSpreadsheet,
+  "Reportes de Producción": Factory,
+  "Producción Inyección": Factory,
+  "Envío de Reportes": Mail,
+  "Carga de Producción": Upload,
+  "Reportes por área": LayoutGrid,
+  "Reportes de Moldes": Boxes,
+  "Reportes de Compuestos": FlaskConical,
+  "Carga de Compuestos": Upload,
 };
 
 const moduleRoutes = {
@@ -35,6 +51,14 @@ const moduleRoutes = {
   Catálogos: "/admin/catalogos",
   "Validación QR": "/calidad/qr-validation",
   "Recepción Cajas": "/calidad/recepcion-cajas",
+  "Carga Masiva de Artículos": "/produccion/carga-articulos",
+  "Reportes de Producción": "/produccion/reportes",
+  "Producción Inyección": "/produccion/inyeccion",
+  "Envío de Reportes": "/admin/envio-reportes",
+  "Carga de Producción": "/produccion/carga-produccion",
+  "Reportes de Moldes": "/moldes/reportes",
+  "Reportes de Compuestos": "/compound/reportes",
+  "Carga de Compuestos": "/compound/carga",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -52,7 +76,9 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   };
 
   const adminModulos = modulos.filter((m) =>
-    ["Gestión de Usuarios", "Logs del Sistema", "Catálogos"].includes(m.nombre),
+    ["Gestión de Usuarios", "Logs del Sistema", "Catálogos", "Envío de Reportes"].includes(
+      m.nombre,
+    ),
   );
   const calidadModulos = modulos.filter((m) =>
     [
@@ -62,7 +88,28 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
       "Recepción Cajas",
     ].includes(m.nombre),
   );
+  const produccionModulos = modulos.filter((m) =>
+    [
+      "Carga Masiva de Artículos",
+      "Reportes de Producción",
+      "Carga de Producción",
+      "Producción Inyección",
+      "Reportes de Compuestos",
+      "Carga de Compuestos",
+    ].includes(m.nombre),
+  );
+  const moldesModulos = modulos.filter((m) =>
+    ["Reportes de Moldes"].includes(m.nombre),
+  );
   const dashboardModulo = modulos.find((m) => m.nombre === "Dashboard");
+
+  // Entrada al menú de reportes por área. No sale de la tabla `modulos`: es
+  // navegación, y lo que se puede abrir dentro ya se filtra por permisos.
+  const menuReportes = {
+    id: "__reportes__",
+    nombre: "Reportes por área",
+    ruta: "/reportes",
+  };
 
   const renderNavItem = (modulo) => {
     const Icon = iconMap[modulo.nombre] || LayoutDashboard;
@@ -174,10 +221,13 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
           </div>
         ) : (
           <>
-            {dashboardModulo && (
-              <div className="mb-6">{renderNavItem(dashboardModulo)}</div>
-            )}
+            <div className="mb-6 space-y-1">
+              {dashboardModulo && renderNavItem(dashboardModulo)}
+              {renderNavItem(menuReportes)}
+            </div>
             {renderSection("Calidad", calidadModulos)}
+            {renderSection("Producción", produccionModulos)}
+            {renderSection("Moldes", moldesModulos)}
             {renderSection("Administración", adminModulos)}
           </>
         )}

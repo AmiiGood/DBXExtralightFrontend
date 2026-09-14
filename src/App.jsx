@@ -8,9 +8,22 @@ import DefectosPage from "./pages/calidad/DefectosPage";
 import ReportesPage from "./pages/calidad/ReportesPage";
 import QrValidationPage from "./pages/calidad/QrValidationPage";
 import RecepcionCajasPage from "./pages/calidad/RecepcionCajasPage";
+import CargaArticulosPage from "./pages/produccion/CargaArticulosPage";
+import ReportesInyeccionPage from "./pages/produccion/ReportesInyeccionPage";
+import ReportesMoldesPage from "./pages/moldes/ReportesMoldesPage";
+import TvMoldesPage from "./pages/moldes/TvMoldesPage";
+import ReportesCompoundPage from "./pages/compound/ReportesCompoundPage";
+import CargaCompuestosPage from "./pages/compound/CargaCompuestosPage";
+import TvCompuestosPage from "./pages/compound/TvCompuestosPage";
+import CapturaInyeccionPage from "./pages/produccion/CapturaInyeccionPage";
+import CargaProduccionPage from "./pages/produccion/CargaProduccionPage";
+import TvInyeccionPage from "./pages/produccion/TvInyeccionPage";
 import UsuariosPage from "./pages/admin/UsuariosPage";
 import LogsPage from "./pages/admin/LogsPage";
 import CatalogosPage from "./pages/admin/CatalogosPage";
+import EnvioReportesPage from "./pages/admin/EnvioReportesPage";
+import AreasPage from "./pages/reportes/AreasPage";
+import AreaDetallePage from "./pages/reportes/AreaDetallePage";
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -25,6 +38,33 @@ function App() {
         }
       />
 
+      {/* Modo TV: protegido, pero SIN el layout (nada de menú ni encabezado,
+          la pantalla es para colgarse en piso y no se navega) */}
+      <Route
+        path="/produccion/tv"
+        element={
+          <ProtectedRoute>
+            <TvInyeccionPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/moldes/tv"
+        element={
+          <ProtectedRoute>
+            <TvMoldesPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/compound/tv"
+        element={
+          <ProtectedRoute>
+            <TvCompuestosPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Rutas protegidas con layout */}
       <Route
         element={
@@ -35,11 +75,42 @@ function App() {
       >
         <Route path="/dashboard" element={<DashboardPage />} />
 
+        {/* Menú de reportes: primero el área, luego el reporte */}
+        <Route path="/reportes" element={<AreasPage />} />
+        <Route path="/reportes/:areaId" element={<AreaDetallePage />} />
+
         {/* Calidad */}
         <Route path="/calidad/defectos" element={<DefectosPage />} />
         <Route path="/calidad/reportes" element={<ReportesPage />} />
         <Route path="/calidad/qr-validation" element={<QrValidationPage />} />
         <Route path="/calidad/recepcion-cajas" element={<RecepcionCajasPage />} />
+
+        {/* Producción */}
+        <Route
+          path="/produccion/carga-articulos"
+          element={<CargaArticulosPage />}
+        />
+        <Route
+          path="/produccion/reportes"
+          element={<ReportesInyeccionPage />}
+        />
+        <Route
+          path="/produccion/carga-produccion"
+          element={<CargaProduccionPage />}
+        />
+        {/* El formulario de captura queda accesible por URL pero fuera del
+            menú: por ahora la información entra por el Excel. */}
+        <Route
+          path="/produccion/inyeccion"
+          element={<CapturaInyeccionPage />}
+        />
+
+        {/* Moldes */}
+        <Route path="/moldes/reportes" element={<ReportesMoldesPage />} />
+
+        {/* Compuestos */}
+        <Route path="/compound/reportes" element={<ReportesCompoundPage />} />
+        <Route path="/compound/carga" element={<CargaCompuestosPage />} />
 
         {/* Admin */}
         <Route
@@ -55,6 +126,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["Administrador"]}>
               <LogsPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/envio-reportes"
+          element={
+            <ProtectedRoute allowedRoles={["Administrador"]}>
+              <EnvioReportesPage />
             </ProtectedRoute>
           }
         />

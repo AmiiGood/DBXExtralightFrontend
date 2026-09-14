@@ -12,6 +12,10 @@ const pageTitles = {
   "/calidad/defectos": "Registro de Defectos",
   "/calidad/reportes": "Reportes de Calidad",
   "/calidad/qr-validation": "Validación QR",
+  "/reportes": "Reportes",
+  "/produccion/reportes": "Reportes de Producción",
+  "/produccion/carga-produccion": "Carga de Producción",
+  "/admin/envio-reportes": "Envío de Reportes",
 };
 
 export default function MainLayout() {

@@ -9,17 +9,33 @@ import Button from "../../components/ui/Button";
 export default function ReportesPage() {
   const [resumenTurno, setResumenTurno] = useState([]);
   const [topDefectos, setTopDefectos] = useState([]);
+  const [unidades, setUnidades] = useState([]);
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [fechas, setFechas] = useState({
     fechaInicio: new Date().toISOString().split("T")[0],
     fechaFin: "",
+    unidadNegocioId: "",
   });
 
   const formatTurno = (turno) => turno.replace("Turno ", "");
 
+  const formatProceso = (p) =>
+    p === "DIGITAL_PRINTING"
+      ? "Digital Printing"
+      : p === "ENSAMBLE"
+        ? "Ensamble"
+        : "";
+
   useEffect(() => {
     fetchReportes();
+    api
+      .get("/defectos/catalogos")
+      .then((res) => {
+        if (res.data.status === "success")
+          setUnidades(res.data.data.unidadesNegocio || []);
+      })
+      .catch((err) => console.error("Error fetching unidades:", err));
   }, []);
 
   const buildDateParams = () => {
@@ -32,6 +48,9 @@ export default function ReportesPage() {
     } else if (fechas.fechaInicio) {
       // Si no hay fecha fin, usar la fecha de inicio como fin (mismo día)
       params.append("fechaFin", `${fechas.fechaInicio}T23:59:59`);
+    }
+    if (fechas.unidadNegocioId) {
+      params.append("unidadNegocioId", fechas.unidadNegocioId);
     }
     return params.toString();
   };
@@ -101,6 +120,8 @@ export default function ReportesPage() {
         { header: "Fecha", key: "fecha", width: 12 },
         { header: "Turno", key: "turno", width: 10 },
         { header: "Área de Producción", key: "area", width: 20 },
+        { header: "Unidad de Negocio", key: "unidad", width: 18 },
+        { header: "Modelo / Proceso", key: "modelo", width: 22 },
         { header: "Tipo de Defecto", key: "defecto", width: 30 },
         { header: "Pares Rechazados", key: "pares", width: 18 },
         { header: "Observaciones", key: "observaciones", width: 30 },
@@ -120,6 +141,8 @@ export default function ReportesPage() {
           fecha: formatFecha(r.fecha_registro),
           turno: formatTurno(r.turno),
           area: r.area_produccion,
+          unidad: r.unidad_negocio || "",
+          modelo: r.modelo || formatProceso(r.proceso_crocs) || "",
           defecto: r.tipo_defecto,
           pares: r.pares_rechazados,
           observaciones: r.observaciones || "",
@@ -243,6 +266,28 @@ export default function ReportesPage() {
               setFechas((prev) => ({ ...prev, fechaFin: e.target.value }))
             }
           />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Unidad de Negocio
+            </label>
+            <select
+              className="px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              value={fechas.unidadNegocioId}
+              onChange={(e) =>
+                setFechas((prev) => ({
+                  ...prev,
+                  unidadNegocioId: e.target.value,
+                }))
+              }
+            >
+              <option value="">Todas</option>
+              {unidades.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
           <Button onClick={fetchReportes} isLoading={loading}>
             <Calendar className="w-4 h-4 mr-2" />
             Aplicar
