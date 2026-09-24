@@ -13,6 +13,7 @@ import {
   TrendingUp,
   Target,
   Users,
+  Headphones,
 } from "lucide-react";
 
 /**
@@ -126,6 +127,20 @@ export const AREAS = [
     nombre: "Recursos Humanos",
     icono: UserRound,
     reportes: [],
+  },
+  {
+    id: "ti",
+    nombre: "TI",
+    icono: Headphones,
+    reportes: [
+      {
+        nombre: "Mesa de ayuda",
+        descripcion:
+          "Tiempo de resolución y de primera respuesta por tema, reparto de la carga y backlog",
+        ruta: "/ti/reportes",
+        modulo: "Reportes de TI",
+      },
+    ],
   },
   {
     id: "mes",

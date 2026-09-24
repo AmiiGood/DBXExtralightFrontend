@@ -21,6 +21,7 @@ import {
   FlaskConical,
   Users2,
   Target,
+  Headphones,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -46,6 +47,7 @@ const iconMap = {
   "Carga de STAFF": Upload,
   "Reportes de Resultados": Target,
   "Carga de Resultados": Upload,
+  "Reportes de TI": Headphones,
 };
 
 const moduleRoutes = {
@@ -69,6 +71,7 @@ const moduleRoutes = {
   "Carga de STAFF": "/staff/carga",
   "Reportes de Resultados": "/resultados/reportes",
   "Carga de Resultados": "/resultados/carga",
+  "Reportes de TI": "/ti/reportes",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -117,6 +120,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   const resultadosModulos = modulos.filter((m) =>
     ["Reportes de Resultados", "Carga de Resultados"].includes(m.nombre),
   );
+  const tiModulos = modulos.filter((m) => ["Reportes de TI"].includes(m.nombre));
   const dashboardModulo = modulos.find((m) => m.nombre === "Dashboard");
 
   // Entrada al menú de reportes por área. No sale de la tabla `modulos`: es
@@ -246,6 +250,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
             {renderSection("Moldes", moldesModulos)}
             {renderSection("STAFF", staffModulos)}
             {renderSection("Resultados", resultadosModulos)}
+            {renderSection("TI", tiModulos)}
             {renderSection("Administración", adminModulos)}
           </>
         )}

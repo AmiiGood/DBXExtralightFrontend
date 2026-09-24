@@ -18,6 +18,7 @@ import TvCompuestosPage from "./pages/compound/TvCompuestosPage";
 import ReportesStaffPage from "./pages/staff/ReportesStaffPage";
 import CargaStaffPage from "./pages/staff/CargaStaffPage";
 import ReportesResultadosPage from "./pages/resultados/ReportesResultadosPage";
+import ReportesTiPage from "./pages/ti/ReportesTiPage";
 import CargaResultadosPage from "./pages/resultados/CargaResultadosPage";
 import CapturaInyeccionPage from "./pages/produccion/CapturaInyeccionPage";
 import CargaProduccionPage from "./pages/produccion/CargaProduccionPage";
@@ -123,6 +124,9 @@ function App() {
         {/* Resultados */}
         <Route path="/resultados/reportes" element={<ReportesResultadosPage />} />
         <Route path="/resultados/carga" element={<CargaResultadosPage />} />
+
+        {/* TI */}
+        <Route path="/ti/reportes" element={<ReportesTiPage />} />
 
         {/* Admin */}
         <Route
