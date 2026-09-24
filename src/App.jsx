@@ -15,6 +15,10 @@ import TvMoldesPage from "./pages/moldes/TvMoldesPage";
 import ReportesCompoundPage from "./pages/compound/ReportesCompoundPage";
 import CargaCompuestosPage from "./pages/compound/CargaCompuestosPage";
 import TvCompuestosPage from "./pages/compound/TvCompuestosPage";
+import ReportesStaffPage from "./pages/staff/ReportesStaffPage";
+import CargaStaffPage from "./pages/staff/CargaStaffPage";
+import ReportesResultadosPage from "./pages/resultados/ReportesResultadosPage";
+import CargaResultadosPage from "./pages/resultados/CargaResultadosPage";
 import CapturaInyeccionPage from "./pages/produccion/CapturaInyeccionPage";
 import CargaProduccionPage from "./pages/produccion/CargaProduccionPage";
 import TvInyeccionPage from "./pages/produccion/TvInyeccionPage";
@@ -111,6 +115,14 @@ function App() {
         {/* Compuestos */}
         <Route path="/compound/reportes" element={<ReportesCompoundPage />} />
         <Route path="/compound/carga" element={<CargaCompuestosPage />} />
+
+        {/* STAFF */}
+        <Route path="/staff/reportes" element={<ReportesStaffPage />} />
+        <Route path="/staff/carga" element={<CargaStaffPage />} />
+
+        {/* Resultados */}
+        <Route path="/resultados/reportes" element={<ReportesResultadosPage />} />
+        <Route path="/resultados/carga" element={<CargaResultadosPage />} />
 
         {/* Admin */}
         <Route

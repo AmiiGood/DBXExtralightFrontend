@@ -19,6 +19,8 @@ import {
   LayoutGrid,
   Boxes,
   FlaskConical,
+  Users2,
+  Target,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -40,6 +42,10 @@ const iconMap = {
   "Reportes de Moldes": Boxes,
   "Reportes de Compuestos": FlaskConical,
   "Carga de Compuestos": Upload,
+  "Reportes de STAFF": Users2,
+  "Carga de STAFF": Upload,
+  "Reportes de Resultados": Target,
+  "Carga de Resultados": Upload,
 };
 
 const moduleRoutes = {
@@ -59,6 +65,10 @@ const moduleRoutes = {
   "Reportes de Moldes": "/moldes/reportes",
   "Reportes de Compuestos": "/compound/reportes",
   "Carga de Compuestos": "/compound/carga",
+  "Reportes de STAFF": "/staff/reportes",
+  "Carga de STAFF": "/staff/carga",
+  "Reportes de Resultados": "/resultados/reportes",
+  "Carga de Resultados": "/resultados/carga",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -100,6 +110,12 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   );
   const moldesModulos = modulos.filter((m) =>
     ["Reportes de Moldes"].includes(m.nombre),
+  );
+  const staffModulos = modulos.filter((m) =>
+    ["Reportes de STAFF", "Carga de STAFF"].includes(m.nombre),
+  );
+  const resultadosModulos = modulos.filter((m) =>
+    ["Reportes de Resultados", "Carga de Resultados"].includes(m.nombre),
   );
   const dashboardModulo = modulos.find((m) => m.nombre === "Dashboard");
 
@@ -228,6 +244,8 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
             {renderSection("Calidad", calidadModulos)}
             {renderSection("Producción", produccionModulos)}
             {renderSection("Moldes", moldesModulos)}
+            {renderSection("STAFF", staffModulos)}
+            {renderSection("Resultados", resultadosModulos)}
             {renderSection("Administración", adminModulos)}
           </>
         )}

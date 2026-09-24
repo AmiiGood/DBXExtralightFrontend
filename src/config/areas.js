@@ -143,13 +143,29 @@ export const AREAS = [
     id: "resultados",
     nombre: "Resultados",
     icono: Target,
-    reportes: [],
+    reportes: [
+      {
+        nombre: "Tablero de Resultados",
+        descripcion:
+          "Facturación, precio por unidad, scrap, capacidad, personal, energía, compound y estado de resultados",
+        ruta: "/resultados/reportes",
+        modulo: "Reportes de Resultados",
+      },
+    ],
   },
   {
     id: "staff",
     nombre: "STAFF",
     icono: Users,
-    reportes: [],
+    reportes: [
+      {
+        nombre: "Junta de STAFF",
+        descripcion:
+          "Facturación, PO abierta, inyección, ensamble y rotación de plantilla",
+        ruta: "/staff/reportes",
+        modulo: "Reportes de STAFF",
+      },
+    ],
   },
 ];
 
