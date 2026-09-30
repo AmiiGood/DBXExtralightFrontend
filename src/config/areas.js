@@ -14,6 +14,8 @@ import {
   Target,
   Users,
   Headphones,
+  ShieldCheck,
+  Handshake,
 } from "lucide-react";
 
 /**
@@ -93,6 +95,14 @@ export const AREAS = [
     reportes: [],
   },
   {
+    id: "aims",
+    // Asset Integrity Management System. Va con el nombre corto porque es como
+    // se le dice en planta; el largo queda en la descripción del área.
+    nombre: "AIMS",
+    icono: ShieldCheck,
+    reportes: [],
+  },
+  {
     id: "planeacion",
     nombre: "Planeación",
     icono: CalendarRange,
@@ -121,6 +131,20 @@ export const AREAS = [
     nombre: "Compras",
     icono: ShoppingCart,
     reportes: [],
+  },
+  {
+    id: "customer-service",
+    nombre: "Customer Service",
+    icono: Handshake,
+    reportes: [
+      {
+        nombre: "Servicio y muestras",
+        descripcion:
+          "OTS, OTIF y nivel de servicio semana a semana, y cumplimiento de los tiempos de muestras",
+        ruta: "/customer-service/reportes",
+        modulo: "Reportes de Customer Service",
+      },
+    ],
   },
   {
     id: "rh",

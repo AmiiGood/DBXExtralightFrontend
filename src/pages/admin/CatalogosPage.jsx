@@ -26,6 +26,15 @@ const tabs = [
   { id: "areas", label: "Áreas/Departamentos", icon: Building2 },
 ];
 
+const GRUPOS_DEFECTO = [
+  { value: "GENERAL", label: "General (Suela, Almohada, Dual Color)" },
+  { value: "ENSAMBLE", label: "Ensamble (Crocs)" },
+  { value: "DIGITAL_PRINTING", label: "Digital Printing (Crocs)" },
+];
+
+const grupoLabel = (v) =>
+  GRUPOS_DEFECTO.find((g) => g.value === v)?.label.split(" (")[0];
+
 export default function CatalogosPage() {
   const [activeTab, setActiveTab] = useState("turnos");
   const [data, setData] = useState([]);
@@ -120,8 +129,9 @@ export default function CatalogosPage() {
     switch (activeTab) {
       case "turnos":
         return { nombre: "", horaInicio: "", horaFin: "", descripcion: "" };
-      case "areas-produccion":
       case "tipos-defectos":
+        return { nombre: "", descripcion: "", grupo: "" };
+      case "areas-produccion":
       case "areas":
         return { nombre: "", descripcion: "" };
       case "roles":
@@ -140,8 +150,13 @@ export default function CatalogosPage() {
           horaFin: item.hora_fin || "",
           descripcion: item.descripcion || "",
         };
-      case "areas-produccion":
       case "tipos-defectos":
+        return {
+          nombre: item.nombre || "",
+          descripcion: item.descripcion || "",
+          grupo: item.grupo || "",
+        };
+      case "areas-produccion":
       case "areas":
         return {
           nombre: item.nombre || "",
@@ -167,8 +182,13 @@ export default function CatalogosPage() {
           horaFin: formData.horaFin,
           descripcion: formData.descripcion || undefined,
         };
-      case "areas-produccion":
       case "tipos-defectos":
+        return {
+          nombre: formData.nombre,
+          descripcion: formData.descripcion || undefined,
+          grupo: formData.grupo || undefined,
+        };
+      case "areas-produccion":
       case "areas":
         return {
           nombre: formData.nombre,
@@ -381,6 +401,11 @@ export default function CatalogosPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                   Nombre
                 </th>
+                {activeTab === "tipos-defectos" && (
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
+                    Grupo
+                  </th>
+                )}
                 <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">
                   Descripción
                 </th>
@@ -399,6 +424,11 @@ export default function CatalogosPage() {
                   <td className="px-4 py-3 text-sm font-medium text-gray-900">
                     {item.nombre}
                   </td>
+                  {activeTab === "tipos-defectos" && (
+                    <td className="px-4 py-3 text-sm text-gray-500">
+                      {grupoLabel(item.grupo) || "Sin clasificar"}
+                    </td>
+                  )}
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {item.descripcion || "-"}
                   </td>
@@ -572,6 +602,31 @@ export default function CatalogosPage() {
               }
               placeholder="Nombre del registro"
             />
+            {activeTab === "tipos-defectos" && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Grupo <span className="text-red-500">*</span>
+                </label>
+                <select
+                  required={!editingItem || !!editingItem.grupo}
+                  className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  value={formData.grupo}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, grupo: e.target.value }))
+                  }
+                >
+                  <option value="">Selecciona un grupo</option>
+                  {GRUPOS_DEFECTO.map((g) => (
+                    <option key={g.value} value={g.value}>
+                      {g.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Define en qué capturas de scrap aparece este defecto.
+                </p>
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Descripción

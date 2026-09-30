@@ -22,6 +22,8 @@ import {
   Users2,
   Target,
   Headphones,
+  Handshake,
+  FolderCog,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -48,6 +50,8 @@ const iconMap = {
   "Reportes de Resultados": Target,
   "Carga de Resultados": Upload,
   "Reportes de TI": Headphones,
+  "Reportes de Customer Service": Handshake,
+  "Archivos de Customer Service": FolderCog,
 };
 
 const moduleRoutes = {
@@ -72,6 +76,8 @@ const moduleRoutes = {
   "Reportes de Resultados": "/resultados/reportes",
   "Carga de Resultados": "/resultados/carga",
   "Reportes de TI": "/ti/reportes",
+  "Reportes de Customer Service": "/customer-service/reportes",
+  "Archivos de Customer Service": "/customer-service/archivos",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -121,6 +127,11 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
     ["Reportes de Resultados", "Carga de Resultados"].includes(m.nombre),
   );
   const tiModulos = modulos.filter((m) => ["Reportes de TI"].includes(m.nombre));
+  const customerServiceModulos = modulos.filter((m) =>
+    ["Reportes de Customer Service", "Archivos de Customer Service"].includes(
+      m.nombre,
+    ),
+  );
   const dashboardModulo = modulos.find((m) => m.nombre === "Dashboard");
 
   // Entrada al menú de reportes por área. No sale de la tabla `modulos`: es
@@ -251,6 +262,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
             {renderSection("STAFF", staffModulos)}
             {renderSection("Resultados", resultadosModulos)}
             {renderSection("TI", tiModulos)}
+            {renderSection("Customer Service", customerServiceModulos)}
             {renderSection("Administración", adminModulos)}
           </>
         )}

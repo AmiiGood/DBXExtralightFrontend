@@ -19,6 +19,8 @@ import ReportesStaffPage from "./pages/staff/ReportesStaffPage";
 import CargaStaffPage from "./pages/staff/CargaStaffPage";
 import ReportesResultadosPage from "./pages/resultados/ReportesResultadosPage";
 import ReportesTiPage from "./pages/ti/ReportesTiPage";
+import ReportesCustomerServicePage from "./pages/customer-service/ReportesCustomerServicePage";
+import ArchivosCustomerServicePage from "./pages/customer-service/ArchivosCustomerServicePage";
 import CargaResultadosPage from "./pages/resultados/CargaResultadosPage";
 import CapturaInyeccionPage from "./pages/produccion/CapturaInyeccionPage";
 import CargaProduccionPage from "./pages/produccion/CargaProduccionPage";
@@ -127,6 +129,14 @@ function App() {
 
         {/* TI */}
         <Route path="/ti/reportes" element={<ReportesTiPage />} />
+        <Route
+          path="/customer-service/reportes"
+          element={<ReportesCustomerServicePage />}
+        />
+        <Route
+          path="/customer-service/archivos"
+          element={<ArchivosCustomerServicePage />}
+        />
 
         {/* Admin */}
         <Route
