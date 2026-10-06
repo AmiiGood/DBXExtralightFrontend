@@ -21,6 +21,9 @@ import ReportesResultadosPage from "./pages/resultados/ReportesResultadosPage";
 import ReportesTiPage from "./pages/ti/ReportesTiPage";
 import ReportesCustomerServicePage from "./pages/customer-service/ReportesCustomerServicePage";
 import ArchivosCustomerServicePage from "./pages/customer-service/ArchivosCustomerServicePage";
+import SolicitudesCompraPage from "./pages/compras/SolicitudesCompraPage";
+import AprobadoresComprasPage from "./pages/compras/AprobadoresComprasPage";
+import ReportesComprasPage from "./pages/compras/ReportesComprasPage";
 import CargaResultadosPage from "./pages/resultados/CargaResultadosPage";
 import CapturaInyeccionPage from "./pages/produccion/CapturaInyeccionPage";
 import CargaProduccionPage from "./pages/produccion/CargaProduccionPage";
@@ -137,6 +140,11 @@ function App() {
           path="/customer-service/archivos"
           element={<ArchivosCustomerServicePage />}
         />
+
+        {/* Compras */}
+        <Route path="/compras/solicitudes" element={<SolicitudesCompraPage />} />
+        <Route path="/compras/aprobadores" element={<AprobadoresComprasPage />} />
+        <Route path="/compras/reportes" element={<ReportesComprasPage />} />
 
         {/* Admin */}
         <Route

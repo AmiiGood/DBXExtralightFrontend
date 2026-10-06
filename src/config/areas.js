@@ -130,7 +130,15 @@ export const AREAS = [
     id: "compras",
     nombre: "Compras",
     icono: ShoppingCart,
-    reportes: [],
+    reportes: [
+      {
+        nombre: "Aprobación de solicitudes",
+        descripcion:
+          "Cuánto tarda cada área en aprobar, cuántas se rechazan y por qué, y lo que espera hoy",
+        ruta: "/compras/reportes",
+        modulo: "Reportes de Compras",
+      },
+    ],
   },
   {
     id: "customer-service",

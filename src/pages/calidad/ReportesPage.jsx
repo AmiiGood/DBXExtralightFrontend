@@ -13,7 +13,9 @@ export default function ReportesPage() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [fechas, setFechas] = useState({
-    fechaInicio: new Date().toISOString().split("T")[0],
+    // Fecha local (YYYY-MM-DD); toISOString daría la de UTC y después de las
+    // 18:00 ya sería el día siguiente.
+    fechaInicio: new Date().toLocaleDateString("sv-SE"),
     fechaFin: "",
     unidadNegocioId: "",
   });

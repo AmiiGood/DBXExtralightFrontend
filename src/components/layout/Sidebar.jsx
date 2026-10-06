@@ -24,6 +24,9 @@ import {
   Headphones,
   Handshake,
   FolderCog,
+  ShoppingCart,
+  UserCheck,
+  Timer,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -52,6 +55,9 @@ const iconMap = {
   "Reportes de TI": Headphones,
   "Reportes de Customer Service": Handshake,
   "Archivos de Customer Service": FolderCog,
+  "Solicitudes de Compra": ShoppingCart,
+  "Aprobadores de Compras": UserCheck,
+  "Reportes de Compras": Timer,
 };
 
 const moduleRoutes = {
@@ -78,6 +84,9 @@ const moduleRoutes = {
   "Reportes de TI": "/ti/reportes",
   "Reportes de Customer Service": "/customer-service/reportes",
   "Archivos de Customer Service": "/customer-service/archivos",
+  "Solicitudes de Compra": "/compras/solicitudes",
+  "Aprobadores de Compras": "/compras/aprobadores",
+  "Reportes de Compras": "/compras/reportes",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -129,6 +138,11 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   const tiModulos = modulos.filter((m) => ["Reportes de TI"].includes(m.nombre));
   const customerServiceModulos = modulos.filter((m) =>
     ["Reportes de Customer Service", "Archivos de Customer Service"].includes(
+      m.nombre,
+    ),
+  );
+  const comprasModulos = modulos.filter((m) =>
+    ["Solicitudes de Compra", "Reportes de Compras", "Aprobadores de Compras"].includes(
       m.nombre,
     ),
   );
@@ -263,6 +277,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
             {renderSection("Resultados", resultadosModulos)}
             {renderSection("TI", tiModulos)}
             {renderSection("Customer Service", customerServiceModulos)}
+            {renderSection("Compras", comprasModulos)}
             {renderSection("Administración", adminModulos)}
           </>
         )}
