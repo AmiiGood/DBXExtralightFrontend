@@ -8,9 +8,13 @@ import { AREAS, reportesVisibles } from "../../config/areas";
 /**
  * Menú de reportes por área.
  *
- * Primer nivel: se elige el área. Las que todavía no tienen reportes se
- * muestran igual, marcadas como pendientes, para que el menú refleje el
- * alcance completo del proyecto y no solo lo ya construido.
+ * Primer nivel: se elige el área.
+ *
+ * Las áreas sin reportes ("por definir") las ve SOLO el administrador, para
+ * seguir el alcance del proyecto. A los demás usuarios les desconcertaba ver
+ * todo lo que falta. Además, para ellos esa lista mezclaba dos cosas: las
+ * áreas que de verdad no tienen reportes y las que sí tienen pero a las que no
+ * tienen permiso, que aparecían como si faltaran.
  */
 export default function AreasPage() {
   const [modulos, setModulos] = useState([]);
@@ -29,9 +33,9 @@ export default function AreasPage() {
   const conReportes = AREAS.filter(
     (a) => reportesVisibles(a, modulos, esAdmin).length > 0,
   );
-  const pendientes = AREAS.filter(
-    (a) => reportesVisibles(a, modulos, esAdmin).length === 0,
-  );
+  const pendientes = esAdmin
+    ? AREAS.filter((a) => reportesVisibles(a, modulos, esAdmin).length === 0)
+    : [];
 
   const Tarjeta = ({ area, disponible }) => {
     const n = reportesVisibles(area, modulos, esAdmin).length;
@@ -104,6 +108,13 @@ export default function AreasPage() {
         </div>
       ) : (
         <>
+          {conReportes.length === 0 && !esAdmin && (
+            <div className="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">
+              Todavía no tienes ningún reporte asignado. Pide acceso al administrador del
+              sistema.
+            </div>
+          )}
+
           {conReportes.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {conReportes.map((a) => (

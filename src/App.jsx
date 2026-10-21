@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "./stores/auth.store";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import MainLayout from "./components/layout/MainLayout";
+import PaginaInicio from "./components/layout/PaginaInicio";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import DefectosPage from "./pages/calidad/DefectosPage";
@@ -47,7 +48,7 @@ function App() {
       <Route
         path="/login"
         element={
-          isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
+          isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
         }
       />
 
@@ -206,7 +207,7 @@ function App() {
               <p className="text-gray-500 mb-4">
                 No tienes permisos para acceder a esta página
               </p>
-              <a href="/dashboard" className="text-primary hover:underline">
+              <a href="/" className="text-primary hover:underline">
                 Volver al inicio
               </a>
             </div>
@@ -214,9 +215,17 @@ function App() {
         }
       />
 
-      {/* Redirección por defecto */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* Redirección por defecto: a la página que le toca a cada usuario,
+          no a todos al Dashboard de Calidad (ver PaginaInicio) */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <PaginaInicio />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

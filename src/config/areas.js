@@ -238,3 +238,31 @@ export function reportesVisibles(area, modulos, esAdmin) {
   const permitidos = new Set((modulos || []).map((m) => m.nombre));
   return area.reportes.filter((r) => !r.modulo || permitidos.has(r.modulo));
 }
+
+/**
+ * A dónde llega cada usuario al entrar.
+ *
+ * Antes todos caían en /dashboard, que es el tablero de Calidad (defectos del
+ * turno). Para quien solo tiene, por ejemplo, el reporte de CAPEX, esa pantalla
+ * no significa nada, y ni siquiera la tiene en su menú. Ahora:
+ *
+ *   1. Administrador                  →  Dashboard, como siempre
+ *   2. Tiene algún reporte de área    →  Reportes por área
+ *   3. Tiene el módulo Dashboard      →  Dashboard (Calidad, Validación QR)
+ *   4. Ninguno de los dos             →  el primer módulo de su menú
+ *
+ * Los reportes van antes que el Dashboard porque es lo que se construyó para
+ * cada área; los roles de Calidad no tienen reportes en ese índice, así que
+ * siguen llegando a su tablero.
+ */
+export function rutaDeInicio(usuario, modulos) {
+  if (usuario?.rol?.esAdmin) return "/dashboard";
+
+  const conReportes = AREAS.some((a) => reportesVisibles(a, modulos, false).length > 0);
+  if (conReportes) return "/reportes";
+
+  if (modulos.some((m) => m.nombre === "Dashboard")) return "/dashboard";
+
+  const primero = modulos.find((m) => m.ruta);
+  return primero ? primero.ruta : "/reportes";
+}

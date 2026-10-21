@@ -43,7 +43,8 @@ export default function LoginPage() {
 
     const result = await login(formData.nombreUsuario, formData.password);
     if (result.success) {
-      navigate("/dashboard");
+      // "/" decide a dónde va según lo que el usuario tiene permitido
+      navigate("/");
     }
   };
 
