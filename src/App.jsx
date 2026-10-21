@@ -24,6 +24,8 @@ import ReportesCustomerServicePage from "./pages/customer-service/ReportesCustom
 import ArchivosCustomerServicePage from "./pages/customer-service/ArchivosCustomerServicePage";
 import ReportesCapexPage from "./pages/capex/ReportesCapexPage";
 import ArchivoCapexPage from "./pages/capex/ArchivoCapexPage";
+import ReportesAimsPage from "./pages/aims/ReportesAimsPage";
+import ArchivoAimsPage from "./pages/aims/ArchivoAimsPage";
 import SolicitudesCompraPage from "./pages/compras/SolicitudesCompraPage";
 import AprobadoresComprasPage from "./pages/compras/AprobadoresComprasPage";
 import ReportesComprasPage from "./pages/compras/ReportesComprasPage";
@@ -148,6 +150,10 @@ function App() {
         {/* CAPEX */}
         <Route path="/capex/reportes" element={<ReportesCapexPage />} />
         <Route path="/capex/archivo" element={<ArchivoCapexPage />} />
+
+        {/* AIMS */}
+        <Route path="/aims/reportes" element={<ReportesAimsPage />} />
+        <Route path="/aims/archivo" element={<ArchivoAimsPage />} />
 
         {/* Compras */}
         <Route path="/compras/solicitudes" element={<SolicitudesCompraPage />} />

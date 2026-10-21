@@ -29,6 +29,7 @@ import {
   Timer,
   Cloud,
   TrendingUp,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -63,6 +64,8 @@ const iconMap = {
   "Archivos de SharePoint": Cloud,
   "Reportes de CAPEX": TrendingUp,
   "Archivo de CAPEX": FolderCog,
+  "Reportes de AIMS": ShieldCheck,
+  "Archivo de AIMS": FolderCog,
 };
 
 const moduleRoutes = {
@@ -95,6 +98,8 @@ const moduleRoutes = {
   "Archivos de SharePoint": "/admin/sharepoint",
   "Reportes de CAPEX": "/capex/reportes",
   "Archivo de CAPEX": "/capex/archivo",
+  "Reportes de AIMS": "/aims/reportes",
+  "Archivo de AIMS": "/aims/archivo",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -155,6 +160,9 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   );
   const capexModulos = modulos.filter((m) =>
     ["Reportes de CAPEX", "Archivo de CAPEX"].includes(m.nombre),
+  );
+  const aimsModulos = modulos.filter((m) =>
+    ["Reportes de AIMS", "Archivo de AIMS"].includes(m.nombre),
   );
   const comprasModulos = modulos.filter((m) =>
     ["Solicitudes de Compra", "Reportes de Compras", "Aprobadores de Compras"].includes(
@@ -293,6 +301,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
             {renderSection("TI", tiModulos)}
             {renderSection("Customer Service", customerServiceModulos)}
             {renderSection("CAPEX", capexModulos)}
+            {renderSection("AIMS", aimsModulos)}
             {renderSection("Compras", comprasModulos)}
             {renderSection("Administración", adminModulos)}
           </>

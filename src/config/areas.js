@@ -100,7 +100,15 @@ export const AREAS = [
     // se le dice en planta; el largo queda en la descripción del área.
     nombre: "AIMS",
     icono: ShieldCheck,
-    reportes: [],
+    reportes: [
+      {
+        nombre: "Indicadores AIMS",
+        descripcion:
+          "Disponibilidad, plan de mantenimiento, capacitación, cumplimiento legal, MTTR, MTBF y plan AIMS contra su meta",
+        ruta: "/aims/reportes",
+        modulo: "Reportes de AIMS",
+      },
+    ],
   },
   {
     id: "planeacion",
