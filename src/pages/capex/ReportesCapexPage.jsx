@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  Cell,
 } from "recharts";
 import {
   TrendingUp,
@@ -23,10 +24,15 @@ import { useAuthStore } from "../../stores/auth.store";
 /**
  * Reporte de CAPEX.
  *
- * Enseña SOLO los proyectos del bloque CAPEX 2026 que ya tienen Firmas FOAM
- * en verde: es el final del proceso interno, y lo que sigue (firmas de
- * Italia) ya no entra. El área pidió no enseñar el resto del avance porque en
- * el libro no está al día.
+ * Tres partes:
+ *
+ *   AVANCE       Cuántas etapas lleva cada proyecto del bloque CAPEX 2026,
+ *                hasta Firmas FOAM. Es el avance tal como está pintado en el
+ *                libro, que el área advirtió que no siempre está al día.
+ *   FIRMAS FOAM  El detalle y los totales, SOLO de los proyectos con Firmas
+ *                FOAM en verde: es el final del proceso interno. Lo que sigue
+ *                (firmas de Italia) ya no entra.
+ *   INIZIATIVE   La curva de gasto 2026–2030 de la hoja 'nuove iniziative'.
  *
  * Un código puede tener varios renglones (26-MEX-05 'Wood audit' son seis
  * sub-proyectos) y cada uno cuenta por separado, con su propia nota para
@@ -119,6 +125,233 @@ function EstadoArchivo({ archivo, onSincronizar, sincronizando, puedeSincronizar
   );
 }
 
+// ===========================================================================
+// AVANCE POR PROYECTO
+// ===========================================================================
+
+const AMBAR = "#e0a526";
+
+const ETAPAS = [
+  ["relacion_tecnica", "Relación técnica"],
+  ["cotizacion", "Cotización"],
+  ["rac", "RAC"],
+  ["layout", "Lay out"],
+  ["hse", "Doc. HSE"],
+  ["firmas_foam", "Firmas FOAM"],
+];
+
+const TEXTO_ESTADO = {
+  VERDE: { t: "Hecha", c: "text-green-700" },
+  AMARILLO: { t: "En proceso", c: "text-amber-600" },
+  GRIS: { t: "No aplica", c: "text-gray-400" },
+  SIN: { t: "Sin empezar", c: "text-gray-400" },
+  OTRO: { t: "—", c: "text-gray-400" },
+};
+
+function TooltipAvance({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0].payload;
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-md p-3 text-xs max-w-xs">
+      <p className="font-semibold text-gray-900">{p.codigo}</p>
+      <p className="text-gray-600">{p.descripcion}</p>
+      {p.notas && <p className="text-gray-400">{p.notas}</p>}
+      {p.dueno && <p className="text-gray-400 mb-1">{p.dueno}</p>}
+      {ETAPAS.map(([k, n]) => {
+        const e = TEXTO_ESTADO[p.etapas[k]] || TEXTO_ESTADO.OTRO;
+        return (
+          <p key={k} className="flex justify-between gap-4">
+            <span className="text-gray-500">{n}</span>
+            <span className={e.c}>{e.t}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Cuántas etapas lleva cada proyecto, de Relación técnica a Firmas FOAM.
+ *
+ * Barra vertical por renglón del bloque: lo hecho (verde en el libro) y, encima,
+ * lo que está en proceso (amarillo). Los que ya llegaron a Firmas FOAM van en
+ * verde; el resto en azul. Los cancelados no entran.
+ *
+ * Un mismo código puede tener varios renglones (26-MEX-05), así que la
+ * etiqueta lleva un número cuando se repite.
+ */
+function GraficaAvance({ avance, bloque }) {
+  if (avance.length === 0) return null;
+
+  const vistos = {};
+  const repetidos = avance.reduce((a, p) => ({ ...a, [p.codigo]: (a[p.codigo] || 0) + 1 }), {});
+  const datos = avance.map((p) => {
+    vistos[p.codigo] = (vistos[p.codigo] || 0) + 1;
+    return {
+      ...p,
+      etiqueta: repetidos[p.codigo] > 1 ? `${p.codigo} (${vistos[p.codigo]})` : p.codigo,
+      Hechas: p.verdes,
+      "En proceso": p.enProceso,
+    };
+  });
+
+  return (
+    <Seccion
+      titulo="Avance por proyecto"
+      nota={
+        `Etapas de Relación técnica a Firmas FOAM que cada proyecto del ${bloque || "bloque"} ` +
+        "tiene en verde (hechas) y en amarillo (en proceso) en el libro. Es el avance tal como " +
+        "está pintado; el área advirtió que no siempre está al día. Los cancelados no se muestran."
+      }
+    >
+      <ResponsiveContainer width="100%" height={340}>
+        <BarChart data={datos} margin={{ top: 10, right: 10, bottom: 40, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis
+            dataKey="etiqueta"
+            angle={-50}
+            textAnchor="end"
+            interval={0}
+            fontSize={11}
+            height={60}
+          />
+          <YAxis
+            domain={[0, 6]}
+            ticks={[0, 1, 2, 3, 4, 5, 6]}
+            fontSize={12}
+            label={{ value: "Etapas", angle: -90, position: "insideLeft", fontSize: 12 }}
+          />
+          <Tooltip content={<TooltipAvance />} cursor={{ fill: "#f1f5f9" }} />
+          <Legend
+            verticalAlign="top"
+            payload={[
+              { value: "Llegó a Firmas FOAM", type: "square", color: VERDE },
+              { value: "Etapas hechas", type: "square", color: AZUL },
+              { value: "En proceso", type: "square", color: AMBAR },
+            ]}
+          />
+          <Bar dataKey="Hechas" stackId="a">
+            {datos.map((p) => (
+              <Cell key={p.id} fill={p.aprobadoFoam ? VERDE : AZUL} />
+            ))}
+          </Bar>
+          <Bar dataKey="En proceso" stackId="a" fill={AMBAR} radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </Seccion>
+  );
+}
+
+// ===========================================================================
+// NUOVE INIZIATIVE
+// ===========================================================================
+
+const PALETA = [
+  "#236093", "#49a090", "#c9761f", "#7c6bb0", "#b0413e",
+  "#5a9bd4", "#8fbf5a", "#e0a526", "#b07aa1", "#7f8c8d",
+];
+
+/**
+ * El plan por iniciativa de la hoja 'nuove iniziative': cuánto se gastará cada
+ * año (la "curva di spesa"), apilado por iniciativa.
+ *
+ * Sus códigos NO son los proyectos de arriba: es otra numeración con el mismo
+ * formato (aquí 26-MEX-01 es "Injection machinery replacement", arriba es
+ * "Dual Color"). Por eso va en su propia sección y se nombra por descripción.
+ */
+function SeccionIniziative({ datos }) {
+  if (!datos?.filas?.length) return null;
+  const { filas, anios, porAnio } = datos;
+  const total = filas.reduce((a, f) => a + f.total, 0);
+
+  return (
+    <Seccion
+      titulo="Nuove iniziative: plan de gasto por año"
+      nota={
+        "Hoja 'nuove iniziative' del libro: lo que se prevé gastar cada año por iniciativa " +
+        `(${eur(total)} de ${anios[0]} a ${anios[anios.length - 1]}). El libro lo trae en miles ` +
+        "de euros. Sus códigos no son los de los proyectos de arriba."
+      }
+    >
+      <ResponsiveContainer width="100%" height={360}>
+        <BarChart data={porAnio} margin={{ top: 10, right: 10, left: 10 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey="anio" fontSize={12} />
+          <YAxis tickFormatter={eurCorto} fontSize={12} width={70} />
+          <Tooltip
+            formatter={(v, k) => [eur(v), filas.find((f) => f.codigo === k)?.descripcion || k]}
+            labelFormatter={(a) => {
+              const p = porAnio.find((x) => x.anio === a);
+              return `${a} — ${eur(p?.total)}`;
+            }}
+          />
+          <Legend
+            formatter={(k) => filas.find((f) => f.codigo === k)?.descripcion || k}
+            wrapperStyle={{ fontSize: 12 }}
+          />
+          {filas.map((f, i) => (
+            <Bar key={f.codigo} dataKey={f.codigo} stackId="a" fill={PALETA[i % PALETA.length]} />
+          ))}
+        </BarChart>
+      </ResponsiveContainer>
+
+      <div className="overflow-x-auto mt-6">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-gray-500 border-b border-gray-100">
+              <th className="py-2 pr-3 font-medium">Código</th>
+              <th className="py-2 pr-3 font-medium">Iniciativa</th>
+              <th className="py-2 pr-3 font-medium">Responsable</th>
+              <th className="py-2 pr-3 font-medium">Estudios</th>
+              {anios.map((a) => (
+                <th key={a} className="py-2 pr-3 font-medium text-right">
+                  {a}
+                </th>
+              ))}
+              <th className="py-2 font-medium text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((f, i) => (
+              <tr key={f.id} className="border-b border-gray-50 last:border-0">
+                <td className="py-2 pr-3 font-mono text-xs text-gray-600 whitespace-nowrap">
+                  <span
+                    className="inline-block w-2.5 h-2.5 rounded-sm mr-1.5 align-middle"
+                    style={{ background: PALETA[i % PALETA.length] }}
+                  />
+                  {f.codigo}
+                </td>
+                <td className="py-2 pr-3 text-gray-800">{f.descripcion}</td>
+                <td className="py-2 pr-3 text-gray-600 whitespace-nowrap">{f.owner || "—"}</td>
+                <td className="py-2 pr-3 text-gray-600">{f.estudios || "—"}</td>
+                {anios.map((a) => (
+                  <td key={a} className="py-2 pr-3 text-right text-gray-600 whitespace-nowrap">
+                    {f.anios?.[a] ? eur(f.anios[a]) : "—"}
+                  </td>
+                ))}
+                <td className="py-2 text-right font-medium whitespace-nowrap">{eur(f.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-gray-200 font-semibold text-gray-800">
+              <td className="py-2 pr-3" colSpan={4}>
+                Total
+              </td>
+              {porAnio.map((p) => (
+                <td key={p.anio} className="py-2 pr-3 text-right whitespace-nowrap">
+                  {eur(p.total)}
+                </td>
+              ))}
+              <td className="py-2 text-right whitespace-nowrap">{eur(total)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </Seccion>
+  );
+}
+
 export default function ReportesCapexPage() {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState(null);
@@ -167,12 +400,6 @@ export default function ReportesCapexPage() {
   }
 
   const { resumen: r, proyectos, trimestres } = datos;
-  const etiqueta = (p) => (p.notas ? `${p.codigo} · ${p.notas}` : p.codigo);
-  const grafica = proyectos.map((p) => ({
-    nombre: etiqueta(p),
-    Presupuesto: p.monto || 0,
-    Gastado: p.gastado || 0,
-  }));
   const total = (k) => proyectos.reduce((a, p) => a + (p[k] || 0), 0);
 
   return (
@@ -226,6 +453,8 @@ export default function ReportesCapexPage() {
         <Tarjeta titulo="Por ejercer" valor={eur(r.porEjercer)} detalle="monto menos gastado" />
       </div>
 
+      <GraficaAvance avance={datos.avance || []} bloque={r.bloque} />
+
       {proyectos.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">
           Ningún proyecto del bloque tiene todavía Firmas FOAM en verde.
@@ -233,24 +462,7 @@ export default function ReportesCapexPage() {
       ) : (
         <>
           <Seccion
-            titulo="Monto y gastado por proyecto"
-            nota="Monto a gastar en 2026 según el libro, contra lo gastado a la fecha."
-          >
-            <ResponsiveContainer width="100%" height={Math.max(180, grafica.length * 56)}>
-              <BarChart data={grafica} layout="vertical" margin={{ left: 10, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" tickFormatter={eurCorto} fontSize={12} />
-                <YAxis type="category" dataKey="nombre" width={210} fontSize={12} />
-                <Tooltip formatter={(v) => eur(v)} />
-                <Legend />
-                <Bar dataKey="Presupuesto" fill={AZUL} radius={[0, 4, 4, 0]} />
-                <Bar dataKey="Gastado" fill={VERDE} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </Seccion>
-
-          <Seccion
-            titulo="Detalle"
+            titulo="Proyectos con firmas FOAM"
             nota="Los gastos por trimestre y el gastado vienen tal cual del libro."
           >
             <div className="overflow-x-auto">
@@ -327,6 +539,8 @@ export default function ReportesCapexPage() {
           </Seccion>
         </>
       )}
+
+      <SeccionIniziative datos={datos.iniziative} />
     </div>
   );
 }

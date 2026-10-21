@@ -65,6 +65,7 @@ export default function ArchivoCapexPage() {
       patron: c.patron,
       hoja: c.hoja,
       bloque: c.bloque,
+      hoja_iniziative: c.hoja_iniziative,
       activo: c.activo,
     });
   };
@@ -97,7 +98,7 @@ export default function ArchivoCapexPage() {
   }
 
   const c = estado.config;
-  const cambiado = ["carpeta", "patron", "hoja", "bloque", "activo"].some(
+  const cambiado = ["carpeta", "patron", "hoja", "bloque", "hoja_iniziative", "activo"].some(
     (k) => form[k] !== c[k],
   );
   const poner = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
@@ -246,6 +247,11 @@ export default function ArchivoCapexPage() {
             etiqueta="Bloque (título donde empieza)"
             valor={form.bloque}
             onChange={poner("bloque")}
+          />
+          <Campo
+            etiqueta="Hoja de nuevas iniciativas"
+            valor={form.hoja_iniziative}
+            onChange={poner("hoja_iniziative")}
           />
         </div>
 
