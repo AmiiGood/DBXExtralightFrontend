@@ -32,7 +32,7 @@ import { useAuthStore } from "../../stores/auth.store";
  *   FIRMAS FOAM  El detalle y los totales, SOLO de los proyectos con Firmas
  *                FOAM en verde: es el final del proceso interno. Lo que sigue
  *                (firmas de Italia) ya no entra.
- *   INIZIATIVE   La curva de gasto 2026–2030 de la hoja 'nuove iniziative'.
+ *   INIZIATIVE   El presupuesto 2026–2030 por año de la hoja 'nuove iniziative'.
  *
  * Un código puede tener varios renglones (26-MEX-05 'Wood audit' son seis
  * sub-proyectos) y cada uno cuenta por separado, con su propia nota para
@@ -252,8 +252,9 @@ const PALETA = [
 ];
 
 /**
- * El plan por iniciativa de la hoja 'nuove iniziative': cuánto se gastará cada
- * año (la "curva di spesa"), apilado por iniciativa.
+ * El presupuesto por iniciativa de la hoja 'nuove iniziative': cuánto tiene
+ * asignado cada año (la "curva di spesa" del libro), apilado por iniciativa.
+ * Es presupuesto, no gasto ejercido.
  *
  * Sus códigos NO son los proyectos de arriba: es otra numeración con el mismo
  * formato (aquí 26-MEX-01 es "Injection machinery replacement", arriba es
@@ -266,9 +267,9 @@ function SeccionIniziative({ datos }) {
 
   return (
     <Seccion
-      titulo="Nuove iniziative: plan de gasto por año"
+      titulo="Nuove iniziative: presupuesto por año"
       nota={
-        "Hoja 'nuove iniziative' del libro: lo que se prevé gastar cada año por iniciativa " +
+        "Hoja 'nuove iniziative' del libro: el presupuesto asignado a cada iniciativa por año " +
         `(${eur(total)} de ${anios[0]} a ${anios[anios.length - 1]}). El libro lo trae en miles ` +
         "de euros. Sus códigos no son los de los proyectos de arriba."
       }
