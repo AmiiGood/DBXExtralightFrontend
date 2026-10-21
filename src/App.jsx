@@ -32,6 +32,7 @@ import UsuariosPage from "./pages/admin/UsuariosPage";
 import LogsPage from "./pages/admin/LogsPage";
 import CatalogosPage from "./pages/admin/CatalogosPage";
 import EnvioReportesPage from "./pages/admin/EnvioReportesPage";
+import ArchivosSharePointPage from "./pages/admin/ArchivosSharePointPage";
 import AreasPage from "./pages/reportes/AreasPage";
 import AreaDetallePage from "./pages/reportes/AreaDetallePage";
 
@@ -168,6 +169,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["Administrador"]}>
               <EnvioReportesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/sharepoint"
+          element={
+            <ProtectedRoute allowedRoles={["Administrador"]}>
+              <ArchivosSharePointPage />
             </ProtectedRoute>
           }
         />

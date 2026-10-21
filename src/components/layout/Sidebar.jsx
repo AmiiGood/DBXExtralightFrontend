@@ -27,6 +27,7 @@ import {
   ShoppingCart,
   UserCheck,
   Timer,
+  Cloud,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -58,6 +59,7 @@ const iconMap = {
   "Solicitudes de Compra": ShoppingCart,
   "Aprobadores de Compras": UserCheck,
   "Reportes de Compras": Timer,
+  "Archivos de SharePoint": Cloud,
 };
 
 const moduleRoutes = {
@@ -87,6 +89,7 @@ const moduleRoutes = {
   "Solicitudes de Compra": "/compras/solicitudes",
   "Aprobadores de Compras": "/compras/aprobadores",
   "Reportes de Compras": "/compras/reportes",
+  "Archivos de SharePoint": "/admin/sharepoint",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -104,9 +107,13 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   };
 
   const adminModulos = modulos.filter((m) =>
-    ["Gestión de Usuarios", "Logs del Sistema", "Catálogos", "Envío de Reportes"].includes(
-      m.nombre,
-    ),
+    [
+      "Gestión de Usuarios",
+      "Logs del Sistema",
+      "Catálogos",
+      "Envío de Reportes",
+      "Archivos de SharePoint",
+    ].includes(m.nombre),
   );
   const calidadModulos = modulos.filter((m) =>
     [
