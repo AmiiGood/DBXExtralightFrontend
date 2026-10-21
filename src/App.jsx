@@ -21,6 +21,8 @@ import ReportesResultadosPage from "./pages/resultados/ReportesResultadosPage";
 import ReportesTiPage from "./pages/ti/ReportesTiPage";
 import ReportesCustomerServicePage from "./pages/customer-service/ReportesCustomerServicePage";
 import ArchivosCustomerServicePage from "./pages/customer-service/ArchivosCustomerServicePage";
+import ReportesCapexPage from "./pages/capex/ReportesCapexPage";
+import ArchivoCapexPage from "./pages/capex/ArchivoCapexPage";
 import SolicitudesCompraPage from "./pages/compras/SolicitudesCompraPage";
 import AprobadoresComprasPage from "./pages/compras/AprobadoresComprasPage";
 import ReportesComprasPage from "./pages/compras/ReportesComprasPage";
@@ -141,6 +143,10 @@ function App() {
           path="/customer-service/archivos"
           element={<ArchivosCustomerServicePage />}
         />
+
+        {/* CAPEX */}
+        <Route path="/capex/reportes" element={<ReportesCapexPage />} />
+        <Route path="/capex/archivo" element={<ArchivoCapexPage />} />
 
         {/* Compras */}
         <Route path="/compras/solicitudes" element={<SolicitudesCompraPage />} />

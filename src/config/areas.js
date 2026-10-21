@@ -184,7 +184,15 @@ export const AREAS = [
     id: "capex",
     nombre: "CAPEX",
     icono: TrendingUp,
-    reportes: [],
+    reportes: [
+      {
+        nombre: "Proyectos con firmas FOAM",
+        descripcion:
+          "Proyectos del CAPEX 2026 que terminaron el proceso interno: monto, gastado y gasto por trimestre",
+        ruta: "/capex/reportes",
+        modulo: "Reportes de CAPEX",
+      },
+    ],
   },
   {
     id: "resultados",
