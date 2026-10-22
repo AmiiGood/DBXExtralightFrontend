@@ -166,7 +166,15 @@ export const AREAS = [
     id: "rh",
     nombre: "Recursos Humanos",
     icono: UserRound,
-    reportes: [],
+    reportes: [
+      {
+        nombre: "Checadas",
+        descripcion:
+          "Quién checó en cada turno: a tiempo, en tolerancia o con retardo, por departamento",
+        ruta: "/checadas/reportes",
+        modulo: "Reportes de Checadas",
+      },
+    ],
   },
   {
     id: "ti",

@@ -26,6 +26,8 @@ import ReportesCapexPage from "./pages/capex/ReportesCapexPage";
 import ArchivoCapexPage from "./pages/capex/ArchivoCapexPage";
 import ReportesAimsPage from "./pages/aims/ReportesAimsPage";
 import ArchivoAimsPage from "./pages/aims/ArchivoAimsPage";
+import ReportesChecadasPage from "./pages/checadas/ReportesChecadasPage";
+import CargaChecadasPage from "./pages/checadas/CargaChecadasPage";
 import SolicitudesCompraPage from "./pages/compras/SolicitudesCompraPage";
 import AprobadoresComprasPage from "./pages/compras/AprobadoresComprasPage";
 import ReportesComprasPage from "./pages/compras/ReportesComprasPage";
@@ -154,6 +156,10 @@ function App() {
         {/* AIMS */}
         <Route path="/aims/reportes" element={<ReportesAimsPage />} />
         <Route path="/aims/archivo" element={<ArchivoAimsPage />} />
+
+        {/* Checadas (RH) */}
+        <Route path="/checadas/reportes" element={<ReportesChecadasPage />} />
+        <Route path="/checadas/carga" element={<CargaChecadasPage />} />
 
         {/* Compras */}
         <Route path="/compras/solicitudes" element={<SolicitudesCompraPage />} />
