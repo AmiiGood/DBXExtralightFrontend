@@ -4,8 +4,8 @@ import { saveAs } from "file-saver";
 /**
  * Exportación del reporte de checadas a Excel.
  *
- * Dos hojas: el detalle (una persona por turno, con su primera checada) y el
- * resumen por departamento. Es lo que RH compara contra su lista de asistencia,
+ * Dos hojas: el detalle (una persona por turno, con su entrada y su salida) y
+ * el resumen por departamento. Es lo que RH compara contra su lista de asistencia,
  * así que va con el número de nómina como número para poder hacer BUSCARV.
  */
 
@@ -35,10 +35,14 @@ export async function exportarReporteChecadas({ datos, desde, hasta }) {
     { header: "Departamento", key: "departamento", width: 26 },
     { header: "Fecha del turno", key: "fechaTurno", width: 15 },
     { header: "Turno", key: "turno", width: 8 },
-    { header: "Fecha checada", key: "fecha", width: 14 },
-    { header: "Hora", key: "hora", width: 8 },
+    { header: "Fecha entrada", key: "fecha", width: 14 },
+    { header: "Entrada", key: "hora", width: 9 },
     { header: "Minutos vs. entrada", key: "minutos", width: 18 },
-    { header: "Estado", key: "estado", width: 14 },
+    { header: "Llegada", key: "estado", width: 14 },
+    { header: "Fecha salida", key: "salidaFecha", width: 14 },
+    { header: "Salida", key: "salidaHora", width: 9 },
+    { header: "Minutos vs. salida", key: "minutosSalida", width: 17 },
+    { header: "Salió antes", key: "salioAntes", width: 11 },
     { header: "Checadas", key: "checadas", width: 10 },
     { header: "Lector", key: "lector", width: 12 },
   ]);
@@ -53,6 +57,10 @@ export async function exportarReporteChecadas({ datos, desde, hasta }) {
       hora: l.hora,
       minutos: l.minutos,
       estado: ESTADO[l.estado] || l.estado,
+      salidaFecha: l.salidaFecha,
+      salidaHora: l.salidaHora,
+      minutosSalida: l.minutosSalida,
+      salioAntes: l.salidaHora ? (l.salioAntes ? "Sí" : "No") : null,
       checadas: l.checadas,
       lector: lector(l.punto),
     });
@@ -65,6 +73,8 @@ export async function exportarReporteChecadas({ datos, desde, hasta }) {
     { header: "A tiempo", key: "aTiempo", width: 10 },
     { header: "En tolerancia", key: "tolerancia", width: 14 },
     { header: "Retardo", key: "retardo", width: 10 },
+    { header: "Con salida", key: "conSalida", width: 11 },
+    { header: "Salieron antes", key: "salieronAntes", width: 14 },
   ]);
   datos.porDepartamento.forEach((d) => deps.addRow(d));
 

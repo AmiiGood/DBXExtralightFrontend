@@ -17,13 +17,15 @@ export const checadasService = {
   /**
    * El reporte de un rango de fechas (del turno).
    *
-   * @param {Object} f { desde, hasta, turnos[], departamentos[], estados[], q }
+   * @param {Object} f { desde, hasta, turnos[], departamentos[], estados[], salida, q }
+   *   salida: 'ANTES' (salieron antes de terminar el turno) | 'SIN' (sin salida)
    */
   getReporte: async (f) => {
     const params = new URLSearchParams({ desde: f.desde, hasta: f.hasta });
     if (f.turnos?.length) params.append("turno", f.turnos.join(","));
     if (f.departamentos?.length) params.append("departamento", f.departamentos.join(","));
     if (f.estados?.length) params.append("estado", f.estados.join(","));
+    if (f.salida) params.append("salida", f.salida);
     if (f.q) params.append("q", f.q);
     const { data } = await api.get(`/checadas/reportes?${params}`);
     return data.data;

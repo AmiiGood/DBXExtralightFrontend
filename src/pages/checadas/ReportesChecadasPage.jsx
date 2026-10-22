@@ -17,9 +17,13 @@ import { exportarReporteChecadas, lector } from "../../utils/exportarReporteChec
 /**
  * Reporte de checadas.
  *
- * Quién checó en cada turno y cómo llegó: a tiempo, en tolerancia (hasta 20
- * minutos después de la entrada) o con retardo. Sale del reporte de
- * Transacciones de Hikvision que RH sube después de cada cambio de turno.
+ * Quién checó en cada turno, cómo llegó (a tiempo, en tolerancia hasta 20
+ * minutos, o con retardo) y, si el archivo trae el día completo, a qué hora
+ * salió. Sale del reporte de Transacciones de Hikvision que sube RH.
+ *
+ * Las checadas de cada persona se agrupan en jornadas (ver ChecadasReporte en
+ * el backend): la primera es la entrada, la última es la salida y lo de en medio
+ * (comida, pasadas por la catraca) no cuenta como entrada a otro turno.
  *
  * ---------------------------------------------------------------------------
  * LO QUE NO SE VE Y SÍ IMPORTA
@@ -35,6 +39,7 @@ const VERDE = "#49a090";
 const NARANJA = "#c9761f";
 const ROJO = "#b0413e";
 const AZUL = "#236093";
+const MORADO = "#7c6bb0";
 
 const ESTADOS = [
   { clave: "A_TIEMPO", nombre: "A tiempo", color: VERDE },
@@ -115,7 +120,7 @@ export default function ReportesChecadasPage() {
       .then((d) => {
         setDisp(d);
         const dia = d.hasta || new Date().toISOString().slice(0, 10);
-        setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], q: "" });
+        setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], salida: "", q: "" });
       })
       .catch((e) => {
         setError(e.response?.data?.message || e.message);
@@ -152,7 +157,7 @@ export default function ReportesChecadasPage() {
   const limpiar = () => {
     const dia = disp?.hasta || filtros.desde;
     setBusqueda("");
-    setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], q: "" });
+    setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], salida: "", q: "" });
   };
 
   const exportar = async () => {
@@ -236,7 +241,7 @@ export default function ReportesChecadasPage() {
       {/* Filtros */}
       {filtros && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Desde</label>
               <input
@@ -270,6 +275,18 @@ export default function ReportesChecadasPage() {
                     {d.departamento}
                   </option>
                 ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Salida</label>
+              <select
+                value={filtros.salida}
+                onChange={(e) => setFiltros((f) => ({ ...f, salida: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">Todas</option>
+                <option value="ANTES">Salieron antes</option>
+                <option value="SIN">Sin salida</option>
               </select>
             </div>
             <div>
@@ -322,7 +339,7 @@ export default function ReportesChecadasPage() {
         </div>
       ) : !datos || r.personas === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">
-          {filtros.turnos.length || filtros.departamentos.length || filtros.estados.length || filtros.q ? (
+          {filtros.turnos.length || filtros.departamentos.length || filtros.estados.length || filtros.salida || filtros.q ? (
             "Nadie cumple con esos filtros en ese rango de fechas."
           ) : (
             <>
@@ -336,7 +353,7 @@ export default function ReportesChecadasPage() {
       ) : (
         <>
           {/* Tarjetas */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className={`grid grid-cols-2 gap-4 ${r.conSalida ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
             <Tarjeta
               titulo="Checaron"
               valor={num(r.personas)}
@@ -360,6 +377,15 @@ export default function ReportesChecadasPage() {
               detalle={`más de ${tolerancia} min después`}
               color={r.retardo ? ROJO : "#1f2937"}
             />
+            {/* Solo con archivos del día completo: los de ventana no traen salidas */}
+            {r.conSalida > 0 && (
+              <Tarjeta
+                titulo="Salieron antes"
+                valor={num(r.salieronAntes)}
+                detalle={`de ${num(r.conSalida)} con salida registrada`}
+                color={r.salieronAntes ? MORADO : "#1f2937"}
+              />
+            )}
           </div>
 
           {/* Por departamento */}
@@ -393,7 +419,8 @@ export default function ReportesChecadasPage() {
                       <th className="py-2 pr-3 font-medium text-right">Checaron</th>
                       <th className="py-2 pr-3 font-medium text-right">A tiempo</th>
                       <th className="py-2 pr-3 font-medium text-right">En tolerancia</th>
-                      <th className="py-2 font-medium text-right">Retardo</th>
+                      <th className="py-2 pr-3 font-medium text-right">Retardo</th>
+                      {r.conSalida > 0 && <th className="py-2 font-medium text-right">Salieron antes</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -404,9 +431,14 @@ export default function ReportesChecadasPage() {
                         <td className="py-2 pr-3 text-right font-medium">{num(t.personas)}</td>
                         <td className="py-2 pr-3 text-right" style={{ color: VERDE }}>{num(t.aTiempo)}</td>
                         <td className="py-2 pr-3 text-right" style={{ color: NARANJA }}>{num(t.tolerancia)}</td>
-                        <td className="py-2 text-right" style={{ color: t.retardo ? ROJO : undefined }}>
+                        <td className="py-2 pr-3 text-right" style={{ color: t.retardo ? ROJO : undefined }}>
                           {num(t.retardo)}
                         </td>
+                        {r.conSalida > 0 && (
+                          <td className="py-2 text-right" style={{ color: t.salieronAntes ? MORADO : undefined }}>
+                            {num(t.salieronAntes)}
+                          </td>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -419,8 +451,8 @@ export default function ReportesChecadasPage() {
           <Seccion
             titulo="Detalle"
             nota={
-              "Una persona por turno con su primera checada." +
-              (r.repetidas ? ` Se quitaron ${num(r.repetidas)} checadas repetidas (pasadas seguidas por el lector).` : "") +
+              "Una persona por turno. Entrada: su primera checada; salida: la última, si fue al menos 4 horas después." +
+              (r.intermedias ? ` Se juntaron ${num(r.intermedias)} checadas intermedias (comida, pasadas por la catraca).` : "") +
               " Solo aparece quien checó."
             }
           >
@@ -432,8 +464,10 @@ export default function ReportesChecadasPage() {
                     <th className="py-2 pr-3 font-medium">Nombre</th>
                     <th className="py-2 pr-3 font-medium">Departamento</th>
                     <th className="py-2 pr-3 font-medium">Turno</th>
-                    <th className="py-2 pr-3 font-medium">Checó</th>
+                    <th className="py-2 pr-3 font-medium">Entrada</th>
                     <th className="py-2 pr-3 font-medium">Llegada</th>
+                    <th className="py-2 pr-3 font-medium">Salida</th>
+                    <th className="py-2 pr-3 font-medium text-right">Checadas</th>
                     <th className="py-2 font-medium">Lector</th>
                   </tr>
                 </thead>
@@ -470,6 +504,31 @@ export default function ReportesChecadasPage() {
                           </span>
                           <span className="text-xs text-gray-400 ml-2">{diferencia(l.minutos)}</span>
                         </td>
+                        <td className="py-2 pr-3 whitespace-nowrap">
+                          {l.salidaHora ? (
+                            <>
+                              <span className="font-medium text-gray-800">{l.salidaHora}</span>
+                              {l.salidaFecha !== l.fechaTurno && (
+                                <span className="text-xs text-gray-400 ml-1">{fechaCorta(l.salidaFecha)}</span>
+                              )}
+                              {l.salioAntes ? (
+                                <span
+                                  className="ml-2 inline-block px-2 py-0.5 rounded-full text-xs font-medium"
+                                  style={{ color: MORADO, background: `${MORADO}1a` }}
+                                >
+                                  Salió {-l.minutosSalida} min antes
+                                </span>
+                              ) : (
+                                <span className="text-xs text-gray-400 ml-2">
+                                  {l.minutosSalida === 0 ? "a la hora" : `${l.minutosSalida} min después`}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                        <td className="py-2 pr-3 text-right text-gray-500">{l.checadas}</td>
                         <td className="py-2 text-gray-500 text-xs">{lector(l.punto)}</td>
                       </tr>
                     );
