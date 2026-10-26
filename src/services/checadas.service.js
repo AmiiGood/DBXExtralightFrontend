@@ -27,6 +27,8 @@ export const checadasService = {
     if (f.estados?.length) params.append("estado", f.estados.join(","));
     if (f.salida) params.append("salida", f.salida);
     if (f.q) params.append("q", f.q);
+    if (f.horaDesde) params.append("horaDesde", f.horaDesde);
+    if (f.horaHasta) params.append("horaHasta", f.horaHasta);
     const { data } = await api.get(`/checadas/reportes?${params}`);
     return data.data;
   },

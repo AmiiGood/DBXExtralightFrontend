@@ -120,7 +120,7 @@ export default function ReportesChecadasPage() {
       .then((d) => {
         setDisp(d);
         const dia = d.hasta || new Date().toISOString().slice(0, 10);
-        setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], salida: "", q: "" });
+        setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], salida: "", q: "", horaDesde: "", horaHasta: "" });
       })
       .catch((e) => {
         setError(e.response?.data?.message || e.message);
@@ -157,7 +157,7 @@ export default function ReportesChecadasPage() {
   const limpiar = () => {
     const dia = disp?.hasta || filtros.desde;
     setBusqueda("");
-    setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], salida: "", q: "" });
+    setFiltros({ desde: dia, hasta: dia, turnos: [], departamentos: [], estados: [], salida: "", q: "", horaDesde: "", horaHasta: "" });
   };
 
   const exportar = async () => {
@@ -241,7 +241,7 @@ export default function ReportesChecadasPage() {
       {/* Filtros */}
       {filtros && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-4">
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Desde</label>
               <input
@@ -257,6 +257,24 @@ export default function ReportesChecadasPage() {
                 type="date"
                 value={filtros.hasta}
                 onChange={(e) => setFiltros((f) => ({ ...f, hasta: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Entrada desde (hora)</label>
+              <input
+                type="time"
+                value={filtros.horaDesde}
+                onChange={(e) => setFiltros((f) => ({ ...f, horaDesde: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Entrada hasta (hora)</label>
+              <input
+                type="time"
+                value={filtros.horaHasta}
+                onChange={(e) => setFiltros((f) => ({ ...f, horaHasta: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
             </div>
@@ -296,7 +314,8 @@ export default function ReportesChecadasPage() {
                 <input
                   value={busqueda}
                   onChange={(e) => setBusqueda(e.target.value)}
-                  placeholder="Nombre o nómina"
+                  placeholder="Nómina exacta o nombre"
+                  title="Un número busca esa nómina exacta (8 no trae 18 ni 80). El nombre no distingue acentos ni mayúsculas."
                   className="w-full border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
@@ -339,7 +358,7 @@ export default function ReportesChecadasPage() {
         </div>
       ) : !datos || r.personas === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 p-10 text-center text-gray-400">
-          {filtros.turnos.length || filtros.departamentos.length || filtros.estados.length || filtros.salida || filtros.q ? (
+          {filtros.turnos.length || filtros.departamentos.length || filtros.estados.length || filtros.salida || filtros.q || filtros.horaDesde || filtros.horaHasta ? (
             "Nadie cumple con esos filtros en ese rango de fechas."
           ) : (
             <>
