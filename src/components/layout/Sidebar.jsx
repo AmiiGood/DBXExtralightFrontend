@@ -31,6 +31,7 @@ import {
   TrendingUp,
   ShieldCheck,
   Clock,
+  Wallet,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -69,6 +70,8 @@ const iconMap = {
   "Archivo de AIMS": FolderCog,
   "Reportes de Checadas": Clock,
   "Carga de Checadas": Upload,
+  "Reportes de Gasto Q4": Wallet,
+  "Carga de Gasto Q4": Upload,
 };
 
 const moduleRoutes = {
@@ -105,6 +108,8 @@ const moduleRoutes = {
   "Archivo de AIMS": "/aims/archivo",
   "Reportes de Checadas": "/checadas/reportes",
   "Carga de Checadas": "/checadas/carga",
+  "Reportes de Gasto Q4": "/gasto-q4/reportes",
+  "Carga de Gasto Q4": "/gasto-q4/carga",
 };
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
@@ -171,6 +176,9 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   );
   const rhModulos = modulos.filter((m) =>
     ["Reportes de Checadas", "Carga de Checadas"].includes(m.nombre),
+  );
+  const finanzasModulos = modulos.filter((m) =>
+    ["Reportes de Gasto Q4", "Carga de Gasto Q4"].includes(m.nombre),
   );
   const comprasModulos = modulos.filter((m) =>
     ["Solicitudes de Compra", "Reportes de Compras", "Aprobadores de Compras"].includes(
@@ -311,6 +319,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
             {renderSection("CAPEX", capexModulos)}
             {renderSection("AIMS", aimsModulos)}
             {renderSection("Recursos Humanos", rhModulos)}
+            {renderSection("Finanzas", finanzasModulos)}
             {renderSection("Compras", comprasModulos)}
             {renderSection("Administración", adminModulos)}
           </>

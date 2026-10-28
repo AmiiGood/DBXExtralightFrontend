@@ -28,6 +28,8 @@ import ReportesAimsPage from "./pages/aims/ReportesAimsPage";
 import ArchivoAimsPage from "./pages/aims/ArchivoAimsPage";
 import ReportesChecadasPage from "./pages/checadas/ReportesChecadasPage";
 import CargaChecadasPage from "./pages/checadas/CargaChecadasPage";
+import ReportesGastoQ4Page from "./pages/gasto-q4/ReportesGastoQ4Page";
+import CargaGastoQ4Page from "./pages/gasto-q4/CargaGastoQ4Page";
 import SolicitudesCompraPage from "./pages/compras/SolicitudesCompraPage";
 import AprobadoresComprasPage from "./pages/compras/AprobadoresComprasPage";
 import ReportesComprasPage from "./pages/compras/ReportesComprasPage";
@@ -160,6 +162,10 @@ function App() {
         {/* Checadas (RH) */}
         <Route path="/checadas/reportes" element={<ReportesChecadasPage />} />
         <Route path="/checadas/carga" element={<CargaChecadasPage />} />
+
+        {/* Gasto Q4 (Finanzas) */}
+        <Route path="/gasto-q4/reportes" element={<ReportesGastoQ4Page />} />
+        <Route path="/gasto-q4/carga" element={<CargaGastoQ4Page />} />
 
         {/* Compras */}
         <Route path="/compras/solicitudes" element={<SolicitudesCompraPage />} />

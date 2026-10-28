@@ -16,6 +16,7 @@ import {
   Headphones,
   ShieldCheck,
   Handshake,
+  Wallet,
 } from "lucide-react";
 
 /**
@@ -221,6 +222,20 @@ export const AREAS = [
           "Facturación, precio por unidad, scrap, capacidad, personal, energía, compound y estado de resultados",
         ruta: "/resultados/reportes",
         modulo: "Reportes de Resultados",
+      },
+    ],
+  },
+  {
+    id: "finanzas",
+    nombre: "Finanzas",
+    icono: Wallet,
+    reportes: [
+      {
+        nombre: "Gasto indispensable Q4",
+        descripcion:
+          "Lo que cada área necesita gastar de octubre a diciembre: por área, por mes y tipo de gasto, en pesos o dólares",
+        ruta: "/gasto-q4/reportes",
+        modulo: "Reportes de Gasto Q4",
       },
     ],
   },
