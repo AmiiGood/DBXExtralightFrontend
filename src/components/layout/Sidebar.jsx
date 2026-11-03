@@ -32,6 +32,7 @@ import {
   ShieldCheck,
   Clock,
   Wallet,
+  Scale,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -63,6 +64,7 @@ const iconMap = {
   "Solicitudes de Compra": ShoppingCart,
   "Aprobadores de Compras": UserCheck,
   "Reportes de Compras": Timer,
+  "Cotizaciones de Compras": Scale,
   "Archivos de SharePoint": Cloud,
   "Reportes de CAPEX": TrendingUp,
   "Archivo de CAPEX": FolderCog,
@@ -101,6 +103,7 @@ const moduleRoutes = {
   "Solicitudes de Compra": "/compras/solicitudes",
   "Aprobadores de Compras": "/compras/aprobadores",
   "Reportes de Compras": "/compras/reportes",
+  "Cotizaciones de Compras": "/compras/cotizaciones",
   "Archivos de SharePoint": "/admin/sharepoint",
   "Reportes de CAPEX": "/capex/reportes",
   "Archivo de CAPEX": "/capex/archivo",
@@ -181,7 +184,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
     ["Reportes de Gasto Q4", "Carga de Gasto Q4"].includes(m.nombre),
   );
   const comprasModulos = modulos.filter((m) =>
-    ["Solicitudes de Compra", "Reportes de Compras", "Aprobadores de Compras"].includes(
+    ["Solicitudes de Compra", "Cotizaciones de Compras", "Reportes de Compras", "Aprobadores de Compras"].includes(
       m.nombre,
     ),
   );

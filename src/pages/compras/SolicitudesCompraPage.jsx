@@ -18,8 +18,14 @@ import {
   Inbox,
   History,
   Upload,
+  Scale,
+  BadgeCheck,
+  RotateCcw,
 } from "lucide-react";
 import { comprasService } from "../../services/compras.service";
+import ArchivoCompras from "../../components/compras/ArchivoCompras";
+import Comparativo from "../../components/compras/Comparativo";
+import { dinero } from "../../components/compras/formatoCompras";
 
 /**
  * Solicitudes de Compra.
@@ -39,6 +45,8 @@ const ESTADOS = {
   RECHAZADA: { texto: "Rechazada", clase: "bg-red-50 text-red-700 border-red-200", icono: XCircle },
   CANCELADA: { texto: "Cancelada", clase: "bg-gray-50 text-gray-500 border-gray-200", icono: Ban },
   EN_COMPRAS: { texto: "En Compras", clase: "bg-blue-50 text-blue-700 border-blue-200", icono: Send },
+  COTIZADA: { texto: "Elige proveedor", clase: "bg-violet-50 text-violet-700 border-violet-200", icono: Scale },
+  ELEGIDA: { texto: "Proveedor elegido", clase: "bg-teal-50 text-teal-700 border-teal-200", icono: BadgeCheck },
 };
 
 const EVENTOS = {
@@ -48,6 +56,9 @@ const EVENTOS = {
   CANCELADA: "Cancelada por quien la pidió",
   ENVIADA: "Ticket creado en Compras",
   ERROR_ENVIO: "No se pudo crear el ticket",
+  COTIZADA: "Compras mandó opciones",
+  OTRAS_OPCIONES: "Pidió otras opciones",
+  ELEGIDA: "Eligió proveedor",
 };
 
 const COMO = { GERENTE: "gerente", SUPLENTE: "suplente", PROPIA: "la pidió el gerente" };
@@ -300,75 +311,6 @@ function NuevaSolicitud({ contexto, onCerrar, onCreada }) {
 // Detalle
 // ===========================================================================
 
-/** Miniatura de imagen o ficha de archivo; el contenido se baja con el token. */
-function Archivo({ solicitudId, archivo }) {
-  const [url, setUrl] = useState(null);
-  const esImagen = archivo.tipo_mime.startsWith("image/");
-
-  useEffect(() => {
-    if (!esImagen) return;
-    let vivo = true;
-    let creada;
-    comprasService
-      .getArchivo(solicitudId, archivo.id)
-      .then((blob) => {
-        creada = URL.createObjectURL(blob);
-        if (vivo) setUrl(creada);
-      })
-      .catch(() => {});
-    return () => {
-      vivo = false;
-      if (creada) URL.revokeObjectURL(creada);
-    };
-  }, [solicitudId, archivo.id, esImagen]);
-
-  const abrir = async (descargar) => {
-    const blob = await comprasService.getArchivo(solicitudId, archivo.id);
-    const u = URL.createObjectURL(blob);
-    if (descargar) {
-      const a = document.createElement("a");
-      a.href = u;
-      a.download = archivo.nombre_original;
-      a.click();
-    } else {
-      window.open(u, "_blank");
-    }
-    setTimeout(() => URL.revokeObjectURL(u), 60000);
-  };
-
-  const Icono = archivo.tipo_mime.includes("pdf") ? FileText : FileSpreadsheet;
-  const visible = esImagen || archivo.tipo_mime.includes("pdf");
-
-  return (
-    <div className="border border-gray-100 rounded-lg overflow-hidden bg-white">
-      <button
-        type="button"
-        onClick={() => abrir(!visible)}
-        className="block w-full h-28 bg-gray-50 hover:bg-gray-100"
-        title={visible ? "Abrir" : "Descargar"}
-      >
-        {esImagen ? (
-          url ? (
-            <img src={url} alt={archivo.nombre_original} className="w-full h-full object-cover" />
-          ) : (
-            <Loader2 className="w-5 h-5 mx-auto animate-spin text-gray-300" />
-          )
-        ) : (
-          <Icono className="w-8 h-8 mx-auto text-gray-400" />
-        )}
-      </button>
-      <div className="flex items-center gap-1 px-2 py-1.5">
-        <span className="text-xs text-gray-600 truncate flex-1" title={archivo.nombre_original}>
-          {archivo.nombre_original}
-        </span>
-        <button type="button" onClick={() => abrir(true)} className="text-gray-400 hover:text-[#236093]" title="Descargar">
-          <Download className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function Detalle({ id, conexion, onCerrar, onCambio }) {
   const [sol, setSol] = useState(null);
   const [error, setError] = useState(null);
@@ -376,6 +318,11 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
   const [rechazando, setRechazando] = useState(false);
   const [trabajando, setTrabajando] = useState(false);
   const [aviso, setAviso] = useState(null);
+  // Elegir proveedor: la opción que se va a confirmar y, aparte, pedir otras
+  const [porElegir, setPorElegir] = useState(null);
+  const [notaEleccion, setNotaEleccion] = useState("");
+  const [pidiendoOtras, setPidiendoOtras] = useState(false);
+  const [motivo, setMotivo] = useState("");
 
   const cargar = useCallback(async () => {
     try {
@@ -397,6 +344,10 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
       setAviso({ ok: true, texto: r.message });
       setRechazando(false);
       setComentario("");
+      setPorElegir(null);
+      setNotaEleccion("");
+      setPidiendoOtras(false);
+      setMotivo("");
       await cargar();
       onCambio();
     } catch (e) {
@@ -407,7 +358,12 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
   };
 
   return (
-    <Modal titulo={sol ? `${sol.folio} · ${sol.asunto}` : "Solicitud"} onCerrar={onCerrar}>
+    <Modal
+      titulo={sol ? `${sol.folio} · ${sol.asunto}` : "Solicitud"}
+      onCerrar={onCerrar}
+      // El comparativo necesita ancho: con tres proveedores ya no cabe en el angosto
+      ancho={sol?.cotizacion ? "max-w-6xl" : "max-w-2xl"}
+    >
       {error ? (
         <div className="p-5 text-sm text-red-700">{error}</div>
       ) : !sol ? (
@@ -434,18 +390,118 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                   : "Aprobada. Se está creando el ticket en Compras."}
             </p>
           )}
-          {sol.estado === "EN_COMPRAS" && sol.osticket_numero && (
+          {["EN_COMPRAS", "COTIZADA", "ELEGIDA"].includes(sol.estado) && sol.osticket_numero && (
             <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
               Ticket de Compras <b>{sol.osticket_numero}</b>
+              {sol.asignado_nombre && <> · lo atiende {sol.asignado_nombre}</>}
+              {sol.osticket_estado && <> · {sol.osticket_estado}</>}
+              {sol.estado === "EN_COMPRAS" && (
+                <span className="block text-xs text-blue-600/80 mt-0.5">
+                  Cuando Compras tenga opciones de proveedores te llegan aquí para que elijas.
+                </span>
+              )}
             </p>
           )}
 
           <p className="text-sm text-gray-800 whitespace-pre-wrap">{sol.detalle}</p>
 
+          {/* --- Opciones de Compras --- */}
+          {sol.cotizacion && (
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                {sol.estado === "ELEGIDA" ? "Opciones de Compras" : "Compras te mandó estas opciones"}
+              </h3>
+              {sol.estado === "ELEGIDA" && (
+                <p className="text-sm text-teal-800 bg-teal-50 rounded-lg px-3 py-2">
+                  Elegiste{" "}
+                  <b>{sol.cotizacion.opciones.find((o) => o.id === sol.opcion_elegida_id)?.proveedor}</b> por{" "}
+                  <b>{dinero(sol.monto_elegido, sol.moneda_elegida)}</b>
+                  {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"} el {fecha(sol.elegido_en)}; Compras sigue con la compra.
+                </p>
+              )}
+              <Comparativo
+                cotizacion={sol.cotizacion}
+                elegidaId={sol.opcion_elegida_id}
+                onElegir={sol.permisos.elegir && !porElegir && !pidiendoOtras ? setPorElegir : undefined}
+              />
+
+              {porElegir && (
+                <div className="border border-green-200 bg-green-50/50 rounded-lg p-3 space-y-2">
+                  <p className="text-sm text-gray-800">
+                    Vas a elegir a <b>{porElegir.proveedor}</b> por <b>{dinero(porElegir.total, porElegir.moneda)}</b>
+                    {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"}.
+                    {!porElegir.completa && " Ojo: no cotizó todas las partidas."}
+                  </p>
+                  <textarea
+                    value={notaEleccion}
+                    onChange={(e) => setNotaEleccion(e.target.value)}
+                    rows={2}
+                    maxLength={1000}
+                    placeholder="Comentario para Compras (opcional)"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+                  />
+                  <div className="flex justify-end gap-2">
+                    <button onClick={() => setPorElegir(null)} className="px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100">
+                      Volver
+                    </button>
+                    <button
+                      disabled={trabajando}
+                      onClick={() =>
+                        accion(() => comprasService.elegir(sol.id, { opcionId: porElegir.id, comentario: notaEleccion }))
+                      }
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {trabajando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                      Confirmar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {sol.permisos.elegir && !porElegir && (
+                pidiendoOtras ? (
+                  <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-3 space-y-2">
+                    <textarea
+                      value={motivo}
+                      onChange={(e) => setMotivo(e.target.value)}
+                      rows={2}
+                      maxLength={1000}
+                      placeholder="¿Por qué ninguna te sirve? (obligatorio; ej. necesito otra marca, el tiempo de entrega es muy largo)"
+                      className="w-full text-sm border border-amber-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-200"
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => setPidiendoOtras(false)} className="px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100">
+                        Volver
+                      </button>
+                      <button
+                        disabled={trabajando || !motivo.trim()}
+                        onClick={() => accion(() => comprasService.pedirOtrasOpciones(sol.id, motivo))}
+                        className="flex items-center gap-2 px-4 py-2 text-sm bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                        Pedir otras opciones
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setPidiendoOtras(true)}
+                      className="inline-flex items-center gap-1.5 text-sm text-amber-700 hover:underline"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Ninguna me sirve, pedir otras opciones
+                    </button>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+
           {sol.archivos.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {sol.archivos.map((a) => (
-                <Archivo key={a.id} solicitudId={sol.id} archivo={a} />
+                <ArchivoCompras key={a.id} archivo={a} cargar={() => comprasService.getArchivo(sol.id, a.id)} />
               ))}
             </div>
           )}
@@ -629,7 +685,7 @@ export default function SolicitudesCompraPage() {
   const varias = contexto.aprueba.length > 1;
 
   const pestanas = [
-    { id: "mias", texto: "Mis solicitudes", icono: ShoppingCart },
+    { id: "mias", texto: "Mis solicitudes", icono: ShoppingCart, contador: contexto.porElegir },
     ...(apruebaAlgo
       ? [
           { id: "pendientes", texto: "Por aprobar", icono: Inbox, contador: contexto.pendientes },
@@ -671,6 +727,15 @@ export default function SolicitudesCompraPage() {
           {!contexto.area
             ? "Tu área todavía no está dada de alta para pedir a Compras. Pídele a TI que la configure."
             : `El área "${contexto.area.nombre}" todavía no tiene quién apruebe. Pídele a TI que la configure.`}
+        </div>
+      )}
+
+      {contexto.porElegir > 0 && (
+        <div className="flex items-center gap-2 text-sm text-violet-800 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3">
+          <Scale className="w-4 h-4 shrink-0" />
+          {contexto.porElegir === 1
+            ? "Compras te mandó opciones de proveedores en una solicitud: ábrela y elige la mejor."
+            : `Compras te mandó opciones de proveedores en ${contexto.porElegir} solicitudes: ábrelas y elige la mejor.`}
         </div>
       )}
 
@@ -762,6 +827,9 @@ export default function SolicitudesCompraPage() {
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <Estado estado={s.estado} />
                     {s.osticket_numero && <span className="ml-2 text-xs text-gray-500">{s.osticket_numero}</span>}
+                    {s.estado === "ELEGIDA" && s.monto_elegido != null && (
+                      <span className="block text-xs text-gray-600 mt-0.5">{dinero(s.monto_elegido, s.moneda_elegida)}</span>
+                    )}
                   </td>
                 </tr>
               ))}

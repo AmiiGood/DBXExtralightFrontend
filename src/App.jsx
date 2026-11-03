@@ -33,6 +33,7 @@ import CargaGastoQ4Page from "./pages/gasto-q4/CargaGastoQ4Page";
 import SolicitudesCompraPage from "./pages/compras/SolicitudesCompraPage";
 import AprobadoresComprasPage from "./pages/compras/AprobadoresComprasPage";
 import ReportesComprasPage from "./pages/compras/ReportesComprasPage";
+import CotizacionesComprasPage from "./pages/compras/CotizacionesComprasPage";
 import CargaResultadosPage from "./pages/resultados/CargaResultadosPage";
 import CapturaInyeccionPage from "./pages/produccion/CapturaInyeccionPage";
 import CargaProduccionPage from "./pages/produccion/CargaProduccionPage";
@@ -171,6 +172,7 @@ function App() {
         <Route path="/compras/solicitudes" element={<SolicitudesCompraPage />} />
         <Route path="/compras/aprobadores" element={<AprobadoresComprasPage />} />
         <Route path="/compras/reportes" element={<ReportesComprasPage />} />
+        <Route path="/compras/cotizaciones" element={<CotizacionesComprasPage />} />
 
         {/* Admin */}
         <Route

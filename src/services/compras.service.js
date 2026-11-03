@@ -143,4 +143,68 @@ export const comprasService = {
     });
     return data;
   },
+
+  // -------------------------------------------------------------------------
+  // Cotizaciones: Compras manda opciones de proveedores, quien pidió elige
+  // -------------------------------------------------------------------------
+
+  /** @param {String} vista  por-cotizar | esperando | elegidas */
+  getCotizaciones: async (vista = "por-cotizar") => {
+    const { data } = await api.get(`/compras/cotizaciones?vista=${vista}`);
+    return data.data;
+  },
+
+  /** La solicitud vista desde Compras: borrador, enviada y descartadas. */
+  getCotizacion: async (id) => {
+    const { data } = await api.get(`/compras/cotizaciones/${id}`);
+    return data.data;
+  },
+
+  guardarBorrador: async (id, borrador) => {
+    const { data } = await api.put(`/compras/cotizaciones/${id}/borrador`, borrador);
+    return data.data;
+  },
+
+  /** Fotos y PDF de los proveedores; regresa [{ id, nombre_original, tipo_mime }]. */
+  subirArchivosCotizacion: async (id, archivos) => {
+    const fd = new FormData();
+    for (const a of archivos) fd.append("archivos", a);
+    const { data } = await api.post(`/compras/cotizaciones/${id}/archivos`, fd, {
+      timeout: 0,
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data;
+  },
+
+  enviarCotizacion: async (id) => {
+    const { data } = await api.post(`/compras/cotizaciones/${id}/enviar`);
+    return data;
+  },
+
+  /** Foto o PDF de un proveedor, como Blob. */
+  getArchivoCotizacion: async (archivoId) => {
+    const { data } = await api.get(`/compras/cotizacion-archivos/${archivoId}`, { responseType: "blob", timeout: 0 });
+    return data;
+  },
+
+  /** Un adjunto de la solicitud, visto desde Compras, como Blob. */
+  getArchivoSolicitudCompras: async (solicitudId, archivoId) => {
+    const { data } = await api.get(`/compras/cotizaciones/${solicitudId}/solicitud-archivos/${archivoId}`, {
+      responseType: "blob",
+      timeout: 0,
+    });
+    return data;
+  },
+
+  /** Quien pidió elige una opción. */
+  elegir: async (id, { opcionId, comentario }) => {
+    const { data } = await api.post(`/compras/solicitudes/${id}/elegir`, { opcionId, comentario });
+    return data;
+  },
+
+  /** Ninguna opción le sirve. */
+  pedirOtrasOpciones: async (id, motivo) => {
+    const { data } = await api.post(`/compras/solicitudes/${id}/otras-opciones`, { motivo });
+    return data;
+  },
 };
