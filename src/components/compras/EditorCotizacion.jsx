@@ -137,8 +137,9 @@ function comoComparativo(e) {
   return { partidas, opciones, mensaje: e.mensaje, incluye_iva: e.incluyeIva, masBarata };
 }
 
+// Sin ancho propio: cada campo dice el suyo (con w-full aquí, w-20 o flex-1 no ganaban)
 const campo =
-  "w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#236093]/30";
+  "text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#236093]/30";
 
 export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnviada }) {
   const [e, setE] = useState(() => desdeServidor(borrador, asunto));
@@ -228,21 +229,21 @@ export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnvi
                 onChange={(ev) => setPartida(i, "descripcion", ev.target.value)}
                 placeholder="Descripción (ej. Adaptador de red USB a Ethernet)"
                 maxLength={300}
-                className={`${campo} flex-1`}
+                className={`${campo} flex-1 min-w-0`}
               />
               <input
                 value={p.cantidad}
                 onChange={(ev) => setPartida(i, "cantidad", ev.target.value)}
                 placeholder="Cant."
                 inputMode="decimal"
-                className={`${campo} w-20 text-right`}
+                className={`${campo} w-20 shrink-0 text-right`}
               />
               <input
                 value={p.unidad}
                 onChange={(ev) => setPartida(i, "unidad", ev.target.value.toUpperCase())}
                 placeholder="U.M."
                 maxLength={20}
-                className={`${campo} w-20`}
+                className={`${campo} w-20 shrink-0`}
               />
               <button
                 onClick={() => cambiar((x) => (x.partidas.splice(i, 1), x))}
@@ -278,12 +279,12 @@ export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnvi
                     onChange={(ev) => setOpcion(i, "proveedor", ev.target.value)}
                     placeholder={`Proveedor ${i + 1}`}
                     maxLength={160}
-                    className={`${campo} font-medium`}
+                    className={`${campo} flex-1 min-w-0 font-medium`}
                   />
                   <select
                     value={o.moneda}
                     onChange={(ev) => setOpcion(i, "moneda", ev.target.value)}
-                    className={`${campo} w-20`}
+                    className={`${campo} w-20 shrink-0`}
                   >
                     <option value="MXN">MXN</option>
                     <option value="USD">USD</option>
@@ -314,7 +315,7 @@ export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnvi
                           onChange={(ev) => setPrecio(i, p.clave, "precio", ev.target.value)}
                           placeholder="Precio unitario"
                           inputMode="decimal"
-                          className={`${campo} w-32 text-right bg-white`}
+                          className={`${campo} w-32 shrink-0 text-right bg-white`}
                         />
                         <span className="text-xs text-gray-500 flex-1 text-right">
                           {precio != null && cant != null ? dinero(precio * cant, o.moneda) : "No lo cotizó"}
@@ -327,7 +328,7 @@ export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnvi
                           placeholder="Lo que ofrece (marca, modelo, características)"
                           rows={2}
                           maxLength={1000}
-                          className={`${campo} flex-1 bg-white resize-none`}
+                          className={`${campo} flex-1 min-w-0 bg-white resize-none`}
                         />
                         {pr.imagen ? (
                           <div className="relative">
@@ -361,14 +362,14 @@ export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnvi
                     onChange={(ev) => setOpcion(i, "tiempoEntrega", ev.target.value)}
                     placeholder="Entrega (ej. 1 sem)"
                     maxLength={80}
-                    className={campo}
+                    className={`${campo} w-full`}
                   />
                   <input
                     value={o.credito}
                     onChange={(ev) => setOpcion(i, "credito", ev.target.value)}
                     placeholder="Crédito (ej. 30 días)"
                     maxLength={80}
-                    className={campo}
+                    className={`${campo} w-full`}
                   />
                 </div>
                 <textarea
@@ -377,7 +378,7 @@ export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnvi
                   placeholder="Observaciones"
                   rows={2}
                   maxLength={1000}
-                  className={`${campo} resize-none`}
+                  className={`${campo} w-full resize-none`}
                 />
                 <div className="flex items-center justify-between gap-2">
                   {o.archivo ? (
@@ -425,7 +426,7 @@ export default function EditorCotizacion({ solicitudId, borrador, asunto, onEnvi
           rows={2}
           maxLength={2000}
           placeholder="Mensaje para quien pidió (opcional): recomendaciones, dudas, algo a considerar"
-          className={campo}
+          className={`${campo} w-full`}
         />
         <label className="inline-flex items-center gap-2 text-sm text-gray-700">
           <input
