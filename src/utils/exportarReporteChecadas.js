@@ -34,7 +34,7 @@ export async function exportarReporteChecadas({ datos, desde, hasta }) {
     { header: "Nombre", key: "nombre", width: 34 },
     { header: "Departamento", key: "departamento", width: 26 },
     { header: "Fecha del turno", key: "fechaTurno", width: 15 },
-    { header: "Turno", key: "turno", width: 8 },
+    { header: "Turno", key: "turno", width: 18 },
     { header: "Fecha entrada", key: "fecha", width: 14 },
     { header: "Entrada", key: "hora", width: 9 },
     { header: "Minutos vs. entrada", key: "minutos", width: 18 },
@@ -46,13 +46,15 @@ export async function exportarReporteChecadas({ datos, desde, hasta }) {
     { header: "Checadas", key: "checadas", width: 10 },
     { header: "Lector", key: "lector", width: 12 },
   ]);
+  // Los generales van como siempre (A, B, C); los especiales con su nombre
+  const nombreTurno = Object.fromEntries((datos.turnos || []).map((t) => [t.clave, t.nombre]));
   for (const l of datos.detalle) {
     detalle.addRow({
       id: /^\d+$/.test(l.empleado_id) ? Number(l.empleado_id) : l.empleado_id,
       nombre: l.nombre,
       departamento: l.departamento,
       fechaTurno: l.fechaTurno,
-      turno: l.turno,
+      turno: l.especial ? nombreTurno[l.turno] || l.turno : l.turno,
       fecha: l.fecha,
       hora: l.hora,
       minutos: l.minutos,

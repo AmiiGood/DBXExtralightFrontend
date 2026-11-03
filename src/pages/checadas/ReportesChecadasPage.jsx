@@ -428,7 +428,10 @@ export default function ReportesChecadasPage() {
 
           {/* Por turno, cuando el rango tiene más de uno */}
           {datos.porTurno.length > 1 && (
-            <Seccion titulo="Por turno" nota="Fecha del turno: el C empieza a las 00:00, así que quien checa a las 23:45 cuenta para el día siguiente.">
+            <Seccion
+              titulo="Por turno"
+              nota="Fecha del turno: el C empieza a las 00:00, así que quien checa a las 23:45 cuenta para el día siguiente. Compuestos noche cuenta en el día en que entra."
+            >
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
@@ -500,8 +503,12 @@ export default function ReportesChecadasPage() {
                         <td className="py-2 pr-3 text-gray-600" title={l.departamento_ruta || undefined}>
                           {l.departamento || "—"}
                         </td>
-                        <td className="py-2 pr-3 text-gray-600 whitespace-nowrap">
-                          {l.turno}
+                        <td
+                          className="py-2 pr-3 text-gray-600 whitespace-nowrap"
+                          title={l.especial ? "Horario especial de la lista de RH" : undefined}
+                        >
+                          {/* Los generales se ven como siempre (A, B, C); los especiales con su nombre */}
+                          {l.especial ? turnoNombre[l.turno]?.nombre || l.turno : l.turno}
                           {filtros.desde !== filtros.hasta && (
                             <span className="text-xs text-gray-400 ml-1">{fechaCorta(l.fechaTurno)}</span>
                           )}

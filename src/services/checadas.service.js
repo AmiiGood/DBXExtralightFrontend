@@ -57,4 +57,33 @@ export const checadasService = {
     const { data } = await api.get("/checadas/carga/historial");
     return data.data;
   },
+
+  // -------------------------------------------------------------------------
+  // Horarios especiales (administrativos, Compuestos de 12 h)
+  // -------------------------------------------------------------------------
+
+  /** Quién tiene horario especial, agrupado por turnos, y la última carga. */
+  getHorarios: async () => {
+    const { data } = await api.get("/checadas/horarios");
+    return data.data;
+  },
+
+  analizarHorarios: async (archivo) => {
+    const fd = new FormData();
+    fd.append("archivo", archivo);
+    const { data } = await api.post("/checadas/horarios/analizar", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data;
+  },
+
+  /** Reemplaza la lista completa. */
+  importarHorarios: async (archivo) => {
+    const fd = new FormData();
+    fd.append("archivo", archivo);
+    const { data } = await api.post("/checadas/horarios/importar", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.data;
+  },
 };

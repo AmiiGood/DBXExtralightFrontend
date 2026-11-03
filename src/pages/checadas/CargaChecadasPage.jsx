@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { checadasService } from "../../services/checadas.service";
+import HorariosEspeciales from "../../components/checadas/HorariosEspeciales";
 
 /**
  * Carga del reporte "Transacciones" de Hikvision.
@@ -275,6 +276,8 @@ export default function CargaChecadasPage() {
           </div>
         </div>
       )}
+
+      <HorariosEspeciales />
 
       {/* Historial */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
