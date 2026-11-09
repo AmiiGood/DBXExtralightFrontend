@@ -207,4 +207,26 @@ export const comprasService = {
     const { data } = await api.post(`/compras/solicitudes/${id}/otras-opciones`, { motivo });
     return data;
   },
+
+  // -------------------------------------------------------------------------
+  // Presupuestos por área
+  // -------------------------------------------------------------------------
+
+  /** Presupuesto y ejercido por mes de todas las áreas, y si el usuario puede capturar. */
+  getPresupuestos: async (anio) => {
+    const { data } = await api.get(`/compras/presupuestos?anio=${anio}`);
+    return data.data;
+  },
+
+  /** Las compras elegidas que se le descontaron a un área. */
+  getEleccionesPresupuesto: async (areaId, anio) => {
+    const { data } = await api.get(`/compras/presupuestos/${areaId}/elecciones?anio=${anio}`);
+    return data.data;
+  },
+
+  /** @param {Array} filas [{ areaId, meses: [12 montos] }] */
+  guardarPresupuestos: async (anio, filas) => {
+    const { data } = await api.put(`/compras/presupuestos/${anio}`, { filas });
+    return data;
+  },
 };

@@ -4,6 +4,7 @@ import { Scale, Loader2, X, Inbox, Hourglass, CheckCircle2, AlertTriangle, Histo
 import { comprasService } from "../../services/compras.service";
 import ArchivoCompras from "../../components/compras/ArchivoCompras";
 import Comparativo from "../../components/compras/Comparativo";
+import PresupuestoArea from "../../components/compras/PresupuestoArea";
 import { dinero } from "../../components/compras/formatoCompras";
 import EditorCotizacion from "../../components/compras/EditorCotizacion";
 
@@ -127,6 +128,10 @@ function Detalle({ id, onCerrar, onCambio }) {
                   ))}
                 </div>
               )}
+              {/* Para cotizar sabiendo cuánto le queda al área */}
+              <div className="mt-3">
+                <PresupuestoArea saldo={sol.presupuesto} area={sol.area_nombre} />
+              </div>
             </div>
 
             {/* Último motivo para pedir otras opciones: lo primero que hay que ver al recotizar */}

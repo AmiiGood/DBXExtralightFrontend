@@ -25,6 +25,7 @@ import {
 import { comprasService } from "../../services/compras.service";
 import ArchivoCompras from "../../components/compras/ArchivoCompras";
 import Comparativo from "../../components/compras/Comparativo";
+import PresupuestoArea from "../../components/compras/PresupuestoArea";
 import { dinero } from "../../components/compras/formatoCompras";
 
 /**
@@ -405,6 +406,9 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
 
           <p className="text-sm text-gray-800 whitespace-pre-wrap">{sol.detalle}</p>
 
+          {/* El gerente lo ve al aprobar; quien pidió, mientras espera y al elegir */}
+          {sol.presupuesto && <PresupuestoArea saldo={sol.presupuesto} area={sol.area_nombre} />}
+
           {/* --- Opciones de Compras --- */}
           {sol.cotizacion && (
             <div className="space-y-3">
@@ -417,11 +421,17 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                   <b>{sol.cotizacion.opciones.find((o) => o.id === sol.opcion_elegida_id)?.proveedor}</b> por{" "}
                   <b>{dinero(sol.monto_elegido, sol.moneda_elegida)}</b>
                   {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"} el {fecha(sol.elegido_en)}; Compras sigue con la compra.
+                  {sol.monto_presupuesto != null && (
+                    <span className="block text-xs text-teal-700/80 mt-0.5">
+                      Se descontaron {dinero(sol.monto_presupuesto)} del presupuesto de tu área (sin IVA, en pesos).
+                    </span>
+                  )}
                 </p>
               )}
               <Comparativo
                 cotizacion={sol.cotizacion}
                 elegidaId={sol.opcion_elegida_id}
+                impacto={sol.impacto}
                 onElegir={sol.permisos.elegir && !porElegir && !pidiendoOtras ? setPorElegir : undefined}
               />
 
@@ -432,6 +442,19 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                     {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"}.
                     {!porElegir.completa && " Ojo: no cotizó todas las partidas."}
                   </p>
+                  {sol.impacto?.opciones?.[porElegir.id]?.monto != null && (
+                    <p
+                      className={`text-sm rounded-md px-2 py-1 ${
+                        sol.impacto.opciones[porElegir.id].rebasa ? "bg-red-100 text-red-800" : "text-gray-600"
+                      }`}
+                    >
+                      Se descuentan {dinero(sol.impacto.opciones[porElegir.id].monto)} del presupuesto de tu área.
+                      {sol.impacto.saldo?.configurado &&
+                        (sol.impacto.opciones[porElegir.id].rebasa
+                          ? ` Rebasa lo disponible: quedaría en ${dinero(sol.impacto.opciones[porElegir.id].quedaMes)} este mes y se le avisará a tu gerente. Puedes elegirla de todos modos.`
+                          : ` Te quedarían ${dinero(sol.impacto.opciones[porElegir.id].quedaMes)} este mes.`)}
+                    </p>
+                  )}
                   <textarea
                     value={notaEleccion}
                     onChange={(e) => setNotaEleccion(e.target.value)}

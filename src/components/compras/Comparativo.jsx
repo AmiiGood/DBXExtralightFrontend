@@ -12,11 +12,13 @@ import { dinero } from "./formatoCompras";
  * observaciones.
  *
  * Si llega `onElegir`, abajo de cada proveedor sale el botón para elegirlo.
+ * Si llega `impacto`, abajo del total sale cuánto descontaría cada opción del
+ * presupuesto del área (sin IVA, en pesos) y cuánto le quedaría este mes.
  */
 
 const cantidadTexto = (n) => (n == null ? "—" : Number(n).toLocaleString("es-MX", { maximumFractionDigits: 3 }));
 
-export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir, eligiendo = null }) {
+export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir, eligiendo = null, impacto = null }) {
   if (!c) return null;
   const cargar = (a) => () => comprasService.getArchivoCotizacion(a.id);
   const celda = "px-3 py-2 border border-gray-200 align-top";
@@ -126,6 +128,36 @@ export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir,
                 </td>
               ))}
             </tr>
+            {impacto && (
+              <tr>
+                <td className={`${celda} text-right text-gray-600`} colSpan={3}>
+                  Presupuesto del área
+                  <span className="block text-[11px] text-gray-400">sin IVA, en pesos</span>
+                </td>
+                {c.opciones.map((o) => {
+                  const i = impacto.opciones?.[o.id];
+                  if (!i) return <td key={o.id} colSpan={2} className={celda} />;
+                  if (i.sinTipoCambio) {
+                    return (
+                      <td key={o.id} colSpan={2} className={`${celda} text-center text-xs text-amber-700`}>
+                        Sin tipo de cambio para convertir dólares
+                      </td>
+                    );
+                  }
+                  return (
+                    <td key={o.id} colSpan={2} className={`${celda} text-right ${i.rebasa ? "bg-red-50" : ""}`}>
+                      <span className="text-gray-700">Descuenta {dinero(i.monto)}</span>
+                      {impacto.saldo?.configurado && (
+                        <span className={`block text-xs ${i.rebasa ? "text-red-700 font-medium" : "text-gray-500"}`}>
+                          {i.rebasa ? "Rebasa: quedaría en " : "Quedarían "}
+                          {dinero(i.quedaMes)} este mes
+                        </span>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            )}
             {[
               ["Tiempo de entrega", "tiempo_entrega"],
               ["Crédito", "credito"],

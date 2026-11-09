@@ -6,6 +6,8 @@
 export const dinero = (n, moneda = "MXN") =>
   n == null
     ? "—"
-    : `$${Number(n).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}${
-        moneda === "USD" ? " USD" : ""
-      }`;
+    : // El signo antes del $: "−$620.69" y no "$-620.69" (un presupuesto rebasado)
+      `${Number(n) < 0 ? "−" : ""}$${Math.abs(Number(n)).toLocaleString("es-MX", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}${moneda === "USD" ? " USD" : ""}`;
