@@ -35,6 +35,7 @@ import AprobadoresComprasPage from "./pages/compras/AprobadoresComprasPage";
 import ReportesComprasPage from "./pages/compras/ReportesComprasPage";
 import CotizacionesComprasPage from "./pages/compras/CotizacionesComprasPage";
 import PresupuestosComprasPage from "./pages/compras/PresupuestosComprasPage";
+import FormatosComprasPage from "./pages/compras/FormatosComprasPage";
 import CargaResultadosPage from "./pages/resultados/CargaResultadosPage";
 import CapturaInyeccionPage from "./pages/produccion/CapturaInyeccionPage";
 import CargaProduccionPage from "./pages/produccion/CargaProduccionPage";
@@ -175,6 +176,7 @@ function App() {
         <Route path="/compras/reportes" element={<ReportesComprasPage />} />
         <Route path="/compras/cotizaciones" element={<CotizacionesComprasPage />} />
         <Route path="/compras/presupuestos" element={<PresupuestosComprasPage />} />
+        <Route path="/compras/formatos" element={<FormatosComprasPage />} />
 
         {/* Admin */}
         <Route

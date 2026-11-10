@@ -229,4 +229,33 @@ export const comprasService = {
     const { data } = await api.put(`/compras/presupuestos/${anio}`, { filas });
     return data;
   },
+
+  // -------------------------------------------------------------------------
+  // Formatos en papel
+  // -------------------------------------------------------------------------
+
+  /** Formatos entre dos fechas (YYYY-MM-DD), con los permisos del usuario. */
+  getFormatos: async ({ desde, hasta }) => {
+    const { data } = await api.get("/compras/formatos", { params: { desde, hasta } });
+    return data.data;
+  },
+
+  /** Áreas y lo ya capturado en cada campo, para sugerirlo. */
+  getOpcionesFormato: async () => {
+    const { data } = await api.get("/compras/formatos/opciones");
+    return data.data;
+  },
+
+  /** Crea (sin id) o corrige (con id) un formato. */
+  guardarFormato: async (id, formato) => {
+    const { data } = id
+      ? await api.put(`/compras/formatos/${id}`, formato)
+      : await api.post("/compras/formatos", formato);
+    return data;
+  },
+
+  borrarFormato: async (id) => {
+    const { data } = await api.delete(`/compras/formatos/${id}`);
+    return data;
+  },
 };

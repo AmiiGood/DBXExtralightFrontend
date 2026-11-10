@@ -34,6 +34,7 @@ import {
   Wallet,
   Scale,
   PiggyBank,
+  ClipboardPenLine,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 
@@ -67,6 +68,7 @@ const iconMap = {
   "Reportes de Compras": Timer,
   "Cotizaciones de Compras": Scale,
   "Presupuestos de Compras": PiggyBank,
+  "Formatos de Compras": ClipboardPenLine,
   "Archivos de SharePoint": Cloud,
   "Reportes de CAPEX": TrendingUp,
   "Archivo de CAPEX": FolderCog,
@@ -107,6 +109,7 @@ const moduleRoutes = {
   "Reportes de Compras": "/compras/reportes",
   "Cotizaciones de Compras": "/compras/cotizaciones",
   "Presupuestos de Compras": "/compras/presupuestos",
+  "Formatos de Compras": "/compras/formatos",
   "Archivos de SharePoint": "/admin/sharepoint",
   "Reportes de CAPEX": "/capex/reportes",
   "Archivo de CAPEX": "/capex/archivo",
@@ -187,7 +190,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
     ["Reportes de Gasto Q4", "Carga de Gasto Q4"].includes(m.nombre),
   );
   const comprasModulos = modulos.filter((m) =>
-    ["Solicitudes de Compra", "Cotizaciones de Compras", "Presupuestos de Compras", "Reportes de Compras", "Aprobadores de Compras"].includes(
+    ["Solicitudes de Compra", "Cotizaciones de Compras", "Presupuestos de Compras", "Formatos de Compras", "Reportes de Compras", "Aprobadores de Compras"].includes(
       m.nombre,
     ),
   );
