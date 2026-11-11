@@ -9,6 +9,8 @@ import { useAuthStore } from "../../stores/auth.store";
 import { todosLosReportes } from "../../config/areas";
 import { cargasVisibles } from "../../config/cargas";
 import { leerRecientes } from "../../utils/recientes";
+import { useTemporada } from "../../config/temporadas";
+import { TiraTemporada, IconoTemporada } from "../../components/temporada/AdornoTemporada";
 
 /**
  * Inicio: lo primero que ve cada usuario al entrar.
@@ -82,6 +84,16 @@ export default function InicioPage() {
   const [modulos, setModulos] = useState(null);
   const [error, setError] = useState(null);
   const [version, setVersion] = useState(0);
+  const { temporada, enTemporada, activos, cambiar } = useTemporada();
+
+  async function alternarAdornos(valor) {
+    if (!valor && !window.confirm("¿Apagar los adornos de temporada para todos los usuarios?")) return;
+    try {
+      await cambiar(valor);
+    } catch (e) {
+      setError(e.response?.data?.message || e.message);
+    }
+  }
 
   useEffect(() => {
     let vivo = true;
@@ -123,12 +135,42 @@ export default function InicioPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-5">
+      {temporada && (
+        <div className="relative -mb-2">
+          <TiraTemporada temporada={temporada} />
+          {esAdmin && (
+            <button
+              onClick={() => alternarAdornos(false)}
+              className="absolute right-0 -bottom-4 text-[11px] text-gray-400 hover:text-gray-600"
+              title="Los adornos salen solos en Navidad, Año nuevo, Fiestas patrias y Día de Muertos"
+            >
+              Apagar adornos
+            </button>
+          )}
+        </div>
+      )}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {saludo()}
-          {nombre ? `, ${nombre}` : ""}
+        <h1 className="text-2xl font-bold text-gray-900 flex flex-wrap items-center gap-x-2">
+          <span>
+            {saludo()}
+            {nombre ? `, ${nombre}` : ""}
+          </span>
+          {temporada && (
+            <span className="inline-flex items-center gap-1.5 text-lg font-semibold text-gray-600">
+              <IconoTemporada temporada={temporada} />
+              {temporada.saludo}
+            </span>
+          )}
         </h1>
         <p className="text-sm text-gray-500 first-letter:uppercase">{fecha}</p>
+        {esAdmin && enTemporada && activos === false && (
+          <p className="text-xs text-gray-400 mt-1">
+            Los adornos de temporada están apagados.{" "}
+            <button onClick={() => alternarAdornos(true)} className="text-[#236093] hover:underline">
+              Encenderlos
+            </button>
+          </p>
+        )}
       </div>
 
       {error && (

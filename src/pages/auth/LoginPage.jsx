@@ -4,9 +4,12 @@ import { User, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
+import { useTemporada } from "../../config/temporadas";
+import { TiraTemporada, IconoTemporada } from "../../components/temporada/AdornoTemporada";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { temporada } = useTemporada();
   const { login, isLoading, error, clearError } = useAuthStore();
 
   const [formData, setFormData] = useState({
@@ -66,11 +69,19 @@ export default function LoginPage() {
           <p className="text-xl text-center text-white/80">
             Plataforma de gestión empresarial
           </p>
+          {temporada && (
+            <p className="mt-6 text-lg font-semibold text-white/90">{temporada.saludo}</p>
+          )}
         </div>
       </div>
 
       {/* Lado derecho - Formulario */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-8 bg-white">
+      <div className="relative w-full lg:w-1/2 flex flex-col justify-center items-center p-8 bg-white">
+        {temporada && (
+          <div className="absolute inset-x-0 top-0">
+            <TiraTemporada temporada={temporada} />
+          </div>
+        )}
         <div className="w-full max-w-md">
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
@@ -92,6 +103,12 @@ export default function LoginPage() {
             <p className="text-gray-500 mt-1 text-center">
               Ingresa tus credenciales para continuar
             </p>
+            {temporada && (
+              <p className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-gray-600">
+                <IconoTemporada temporada={temporada} className="w-4 h-4" />
+                {temporada.saludo}
+              </p>
+            )}
           </div>
 
           {/* Error general */}
