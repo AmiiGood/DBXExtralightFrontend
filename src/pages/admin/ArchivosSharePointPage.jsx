@@ -24,6 +24,12 @@ import { sharePointService } from "../../services/sharePoint.service";
  * La pantalla de carga manual sigue existiendo: sirve para un archivo que no
  * está en SharePoint o para cargar algo antes de que pase la revisión.
  *
+ * La ubicación puede ser la URL de SharePoint (lectura por Graph, que necesita
+ * el consentimiento de TI de Finproject) o una carpeta sincronizada con
+ * OneDrive en un equipo con sesión iniciada: C:\Users\…\Finproject S.p.A\… o
+ * \\equipo\carpeta. Finproject no dio el consentimiento, así que la segunda
+ * es la que funciona hoy.
+ *
  * ---------------------------------------------------------------------------
  * EL BOTÓN DE PROBAR NO CARGA NADA
  * ---------------------------------------------------------------------------
@@ -118,12 +124,12 @@ function Archivo({ config, onGuardado, onLeer, ocupado }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
-          <label className="text-xs text-gray-500">Carpeta en SharePoint (URL)</label>
+          <label className="text-xs text-gray-500">Carpeta sincronizada con OneDrive o URL de SharePoint</label>
           <input
             value={ubicacion}
             onChange={(e) => setUbicacion(e.target.value)}
             spellCheck={false}
-            placeholder="https://finprojectspa.sharepoint.com/sites/…/Shared Documents/…"
+            placeholder="C:\Users\…\Finproject S.p.A\KPI's - Production   o   https://…sharepoint.com/sites/…"
             className="mt-1 w-full text-sm font-mono border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#236093]/30"
           />
           {/* El enlace de "Compartir" es el error típico: es un token que la
@@ -134,9 +140,15 @@ function Archivo({ config, onGuardado, onLeer, ocupado }) {
               Es un enlace para compartir. Abrir la carpeta en el navegador y copiar la
               dirección de la barra.
             </p>
+          ) : /^[a-z]:[\\/]|^\\\\/i.test(ubicacion.trim()) ? (
+            <p className="text-xs text-gray-400 mt-1">
+              Carpeta sincronizada: debe estar en "Mantener siempre en este dispositivo" y la cuenta
+              del servidor necesita permiso de lectura. Si está en otro equipo, usar \\equipo\carpeta.
+            </p>
           ) : (
             <p className="text-xs text-gray-400 mt-1">
-              Abrir la carpeta en el navegador y copiar la dirección de la barra.
+              Copiar la ruta de la carpeta sincronizada desde el Explorador de archivos, o la
+              dirección de la carpeta de SharePoint desde el navegador.
             </p>
           )}
         </div>
@@ -334,14 +346,15 @@ export default function ArchivosSharePointPage() {
         </div>
       </div>
 
-      {!estado.configurado && (
+      {!estado.graph && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-900 flex items-start gap-2">
           <KeyRound className="w-4 h-4 mt-0.5 shrink-0" />
           <span>
-            El servidor todavía no tiene credenciales para entrar a SharePoint. Falta
-            registrar la aplicación en Azure y poner <code>SP_TENANT_ID</code>,{" "}
-            <code>SP_CLIENT_ID</code> y <code>SP_CLIENT_SECRET</code> en el .env del
-            backend. Los pasos están en DESPLIEGUE_SHAREPOINT.md.
+            El servidor no tiene credenciales para entrar a SharePoint directamente (Finproject no
+            autorizó la aplicación). Se puede leer igual desde una <b>carpeta sincronizada con
+            OneDrive</b>: en SharePoint, "Sincronizar"; en el Explorador, clic derecho en la carpeta
+            &gt; "Mantener siempre en este dispositivo"; y aquí abajo, la ruta de esa carpeta en la
+            ubicación de cada archivo. Los pasos están en DESPLIEGUE_SHAREPOINT.md.
           </span>
         </div>
       )}
