@@ -153,6 +153,13 @@ export const AREAS = [
     icono: ShoppingCart,
     reportes: [
       {
+        nombre: "Tablero de compras",
+        descripcion:
+          "Gasto autorizado contra presupuesto, por área, mes y tipo, en pesos o dólares (para Dirección)",
+        ruta: "/compras/tablero",
+        modulo: "Tablero de Compras",
+      },
+      {
         nombre: "Aprobación de solicitudes",
         descripcion:
           "Cuánto tarda cada área en aprobar, cuántas se rechazan y por qué, y lo que espera hoy",
