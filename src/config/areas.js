@@ -60,21 +60,33 @@ export const AREAS = [
     ],
   },
 
-  // ---------------------------------------------------------------------
-  // Áreas que entran al proyecto pero cuyos reportes están por definirse.
-  // Se dejan visibles a propósito: el menú tiene que reflejar el alcance
-  // completo aunque todavía no haya nada que abrir.
-  //
-  // Calidad va aquí aunque ya tenga pantallas propias en el sistema: en este
-  // menú solo entran reportes hechos para este proyecto, y de Calidad todavía
-  // no se ha hecho ninguno.
-  // ---------------------------------------------------------------------
+  // Calidad: sus dos pantallas de consulta salieron del menú lateral (que ahora
+  // solo lleva captura y configuración) y viven aquí como cualquier reporte.
+  // El tablero del turno era la pantalla a la que llegaban todos al entrar.
   {
     id: "calidad",
     nombre: "Calidad",
     icono: ClipboardCheck,
-    reportes: [],
+    reportes: [
+      {
+        nombre: "Tablero del turno",
+        descripcion: "Escaneos de QR y defectos registrados hoy",
+        ruta: "/dashboard",
+        modulo: "Dashboard",
+      },
+      {
+        nombre: "Reportes de Calidad",
+        descripcion: "Resumen por turno y defectos más frecuentes por periodo y unidad de negocio",
+        ruta: "/calidad/reportes",
+        modulo: "Reportes de Calidad",
+      },
+    ],
   },
+
+  // ---------------------------------------------------------------------
+  // Las áreas sin reportes todavía se dejan visibles a propósito: el menú
+  // tiene que reflejar el alcance completo aunque no haya nada que abrir.
+  // ---------------------------------------------------------------------
   {
     id: "moldes",
     nombre: "Moldes",
@@ -270,30 +282,16 @@ export function reportesVisibles(area, modulos, esAdmin) {
   return area.reportes.filter((r) => !r.modulo || permitidos.has(r.modulo));
 }
 
-/**
- * A dónde llega cada usuario al entrar.
- *
- * Antes todos caían en /dashboard, que es el tablero de Calidad (defectos del
- * turno). Para quien solo tiene, por ejemplo, el reporte de CAPEX, esa pantalla
- * no significa nada, y ni siquiera la tiene en su menú. Ahora:
- *
- *   1. Administrador                  →  Dashboard, como siempre
- *   2. Tiene algún reporte de área    →  Reportes por área
- *   3. Tiene el módulo Dashboard      →  Dashboard (Calidad, Validación QR)
- *   4. Ninguno de los dos             →  el primer módulo de su menú
- *
- * Los reportes van antes que el Dashboard porque es lo que se construyó para
- * cada área; los roles de Calidad no tienen reportes en ese índice, así que
- * siguen llegando a su tablero.
- */
-export function rutaDeInicio(usuario, modulos) {
-  if (usuario?.rol?.esAdmin) return "/dashboard";
+/** Nombres de los módulos que son reportes (para sacarlos del menú lateral). */
+export const MODULOS_DE_REPORTE = new Set(
+  AREAS.flatMap((a) => a.reportes.map((r) => r.modulo).filter(Boolean)),
+);
 
-  const conReportes = AREAS.some((a) => reportesVisibles(a, modulos, false).length > 0);
-  if (conReportes) return "/reportes";
-
-  if (modulos.some((m) => m.nombre === "Dashboard")) return "/dashboard";
-
-  const primero = modulos.find((m) => m.ruta);
-  return primero ? primero.ruta : "/reportes";
+/** Los reportes que el usuario puede abrir, de todas las áreas, con su área. */
+export function todosLosReportes(modulos, esAdmin) {
+  return AREAS.flatMap((a) =>
+    reportesVisibles(a, modulos, esAdmin)
+      .filter((r) => r.ruta)
+      .map((r) => ({ ...r, area: a.nombre, areaId: a.id, icono: a.icono })),
+  );
 }

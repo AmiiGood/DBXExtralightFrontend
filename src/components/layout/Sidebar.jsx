@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
+  House,
   Users,
   FileText,
   ClipboardList,
-  BarChart3,
   Settings,
   LogOut,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   QrCode,
   PackageCheck,
   FileSpreadsheet,
@@ -17,114 +18,118 @@ import {
   Mail,
   Upload,
   LayoutGrid,
-  Boxes,
-  FlaskConical,
-  Users2,
-  Target,
-  Headphones,
-  Handshake,
-  FolderCog,
   ShoppingCart,
   UserCheck,
-  Timer,
-  Cloud,
-  TrendingUp,
-  ShieldCheck,
-  Clock,
-  Wallet,
   Scale,
   PiggyBank,
   ClipboardPenLine,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
+import { MODULOS_DE_REPORTE } from "../../config/areas";
+import { MODULOS_DE_CARGA } from "../../config/cargas";
+
+/**
+ * Menú lateral.
+ *
+ * Arriba, tres entradas fijas: Inicio, Reportes por área y Cargas de datos.
+ * Debajo, solo las pantallas de TRABAJO (capturar, cotizar, configurar)
+ * agrupadas por área. Los reportes no salen aquí porque ya están en
+ * "Reportes por área", y las cargas de Excel y archivos vigilados viven juntas
+ * en "Cargas de datos": antes el administrador veía ~39 entradas y los
+ * reportes salían dos veces.
+ *
+ * Un módulo nuevo que no esté en ninguna lista no se pierde: cae en "Otros"
+ * hasta que se le acomode.
+ */
+
+const SECCIONES = [
+  {
+    titulo: "Compras",
+    modulos: ["Solicitudes de Compra", "Cotizaciones de Compras", "Presupuestos de Compras", "Formatos de Compras"],
+  },
+  {
+    titulo: "Calidad",
+    modulos: ["FPG-QA-001 Ver.03 OBA ensamble", "Validación QR", "Recepción Cajas"],
+  },
+  {
+    titulo: "Producción",
+    modulos: ["Producción Inyección", "Carga Masiva de Artículos"],
+  },
+  {
+    titulo: "Administración",
+    modulos: ["Gestión de Usuarios", "Aprobadores de Compras", "Catálogos", "Envío de Reportes", "Logs del Sistema"],
+    // Se usa poco: empieza plegada (se abre sola si estás en una de sus pantallas)
+    plegada: true,
+  },
+];
+
+// Dentro de su sección el nombre largo sobra
+const ETIQUETAS = {
+  "Cotizaciones de Compras": "Cotizaciones",
+  "Presupuestos de Compras": "Presupuestos",
+  "Formatos de Compras": "Formatos en papel",
+  "Producción Inyección": "Captura de inyección",
+};
 
 const iconMap = {
-  Dashboard: LayoutDashboard,
   "Gestión de Usuarios": Users,
   "Logs del Sistema": FileText,
   "FPG-QA-001 Ver.03 OBA ensamble": ClipboardList,
-  "Reportes de Calidad": BarChart3,
   Catálogos: Settings,
   "Validación QR": QrCode,
   "Recepción Cajas": PackageCheck,
   "Carga Masiva de Artículos": FileSpreadsheet,
-  "Reportes de Producción": Factory,
   "Producción Inyección": Factory,
   "Envío de Reportes": Mail,
-  "Carga de Producción": Upload,
-  "Reportes por área": LayoutGrid,
-  "Reportes de Moldes": Boxes,
-  "Reportes de Compuestos": FlaskConical,
-  "Carga de Compuestos": Upload,
-  "Reportes de STAFF": Users2,
-  "Carga de STAFF": Upload,
-  "Reportes de Resultados": Target,
-  "Carga de Resultados": Upload,
-  "Reportes de TI": Headphones,
-  "Reportes de Customer Service": Handshake,
-  "Archivos de Customer Service": FolderCog,
   "Solicitudes de Compra": ShoppingCart,
   "Aprobadores de Compras": UserCheck,
-  "Reportes de Compras": Timer,
   "Cotizaciones de Compras": Scale,
   "Presupuestos de Compras": PiggyBank,
   "Formatos de Compras": ClipboardPenLine,
-  "Archivos de SharePoint": Cloud,
-  "Reportes de CAPEX": TrendingUp,
-  "Archivo de CAPEX": FolderCog,
-  "Reportes de AIMS": ShieldCheck,
-  "Archivo de AIMS": FolderCog,
-  "Reportes de Checadas": Clock,
-  "Carga de Checadas": Upload,
-  "Reportes de Gasto Q4": Wallet,
-  "Carga de Gasto Q4": Upload,
 };
 
-const moduleRoutes = {
-  Dashboard: "/dashboard",
-  "Gestión de Usuarios": "/admin/usuarios",
-  "Logs del Sistema": "/admin/logs",
-  "FPG-QA-001 Ver.03 OBA ensamble": "/calidad/defectos",
-  "Reportes de Calidad": "/calidad/reportes",
-  Catálogos: "/admin/catalogos",
-  "Validación QR": "/calidad/qr-validation",
-  "Recepción Cajas": "/calidad/recepcion-cajas",
-  "Carga Masiva de Artículos": "/produccion/carga-articulos",
-  "Reportes de Producción": "/produccion/reportes",
-  "Producción Inyección": "/produccion/inyeccion",
-  "Envío de Reportes": "/admin/envio-reportes",
-  "Carga de Producción": "/produccion/carga-produccion",
-  "Reportes de Moldes": "/moldes/reportes",
-  "Reportes de Compuestos": "/compound/reportes",
-  "Carga de Compuestos": "/compound/carga",
-  "Reportes de STAFF": "/staff/reportes",
-  "Carga de STAFF": "/staff/carga",
-  "Reportes de Resultados": "/resultados/reportes",
-  "Carga de Resultados": "/resultados/carga",
-  "Reportes de TI": "/ti/reportes",
-  "Reportes de Customer Service": "/customer-service/reportes",
-  "Archivos de Customer Service": "/customer-service/archivos",
-  "Solicitudes de Compra": "/compras/solicitudes",
-  "Aprobadores de Compras": "/compras/aprobadores",
-  "Reportes de Compras": "/compras/reportes",
-  "Cotizaciones de Compras": "/compras/cotizaciones",
-  "Presupuestos de Compras": "/compras/presupuestos",
-  "Formatos de Compras": "/compras/formatos",
-  "Archivos de SharePoint": "/admin/sharepoint",
-  "Reportes de CAPEX": "/capex/reportes",
-  "Archivo de CAPEX": "/capex/archivo",
-  "Reportes de AIMS": "/aims/reportes",
-  "Archivo de AIMS": "/aims/archivo",
-  "Reportes de Checadas": "/checadas/reportes",
-  "Carga de Checadas": "/checadas/carga",
-  "Reportes de Gasto Q4": "/gasto-q4/reportes",
-  "Carga de Gasto Q4": "/gasto-q4/carga",
-};
+const FIJAS = [
+  { id: "__inicio__", nombre: "Inicio", ruta: "/inicio", icono: House },
+  { id: "__reportes__", nombre: "Reportes por área", ruta: "/reportes", icono: LayoutGrid },
+  { id: "__cargas__", nombre: "Cargas de datos", ruta: "/cargas", icono: Upload, soloConCargas: true },
+];
+
+const LLAVE_PLEGADAS = "dbx.menu.plegadas";
+
+function leerPlegadas() {
+  try {
+    const v = JSON.parse(localStorage.getItem(LLAVE_PLEGADAS) || "null");
+    return v && typeof v === "object" ? v : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Arma las secciones con lo que el usuario puede abrir. */
+function armarSecciones(modulos) {
+  const usados = new Set();
+  const secciones = SECCIONES.map((s) => {
+    const items = s.modulos.map((n) => modulos.find((m) => m.nombre === n)).filter(Boolean);
+    items.forEach((m) => usados.add(m.nombre));
+    return { ...s, items };
+  });
+  const otros = modulos.filter(
+    (m) =>
+      !usados.has(m.nombre) &&
+      !MODULOS_DE_REPORTE.has(m.nombre) &&
+      !MODULOS_DE_CARGA.has(m.nombre) &&
+      m.nombre !== "Dashboard",
+  );
+  if (otros.length) secciones.push({ titulo: "Otros", items: otros });
+  return secciones.filter((s) => s.items.length > 0);
+}
 
 export default function Sidebar({ modulos = [], loading = false, onToggle }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [plegadas, setPlegadas] = useState(leerPlegadas);
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (onToggle) onToggle(collapsed);
@@ -135,108 +140,61 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
     navigate("/login");
   };
 
-  const adminModulos = modulos.filter((m) =>
-    [
-      "Gestión de Usuarios",
-      "Logs del Sistema",
-      "Catálogos",
-      "Envío de Reportes",
-      "Archivos de SharePoint",
-    ].includes(m.nombre),
-  );
-  const calidadModulos = modulos.filter((m) =>
-    [
-      "FPG-QA-001 Ver.03 OBA ensamble",
-      "Reportes de Calidad",
-      "Validación QR",
-      "Recepción Cajas",
-    ].includes(m.nombre),
-  );
-  const produccionModulos = modulos.filter((m) =>
-    [
-      "Carga Masiva de Artículos",
-      "Reportes de Producción",
-      "Carga de Producción",
-      "Producción Inyección",
-      "Reportes de Compuestos",
-      "Carga de Compuestos",
-    ].includes(m.nombre),
-  );
-  const moldesModulos = modulos.filter((m) =>
-    ["Reportes de Moldes"].includes(m.nombre),
-  );
-  const staffModulos = modulos.filter((m) =>
-    ["Reportes de STAFF", "Carga de STAFF"].includes(m.nombre),
-  );
-  const resultadosModulos = modulos.filter((m) =>
-    ["Reportes de Resultados", "Carga de Resultados"].includes(m.nombre),
-  );
-  const tiModulos = modulos.filter((m) => ["Reportes de TI"].includes(m.nombre));
-  const customerServiceModulos = modulos.filter((m) =>
-    ["Reportes de Customer Service", "Archivos de Customer Service"].includes(
-      m.nombre,
-    ),
-  );
-  const capexModulos = modulos.filter((m) =>
-    ["Reportes de CAPEX", "Archivo de CAPEX"].includes(m.nombre),
-  );
-  const aimsModulos = modulos.filter((m) =>
-    ["Reportes de AIMS", "Archivo de AIMS"].includes(m.nombre),
-  );
-  const rhModulos = modulos.filter((m) =>
-    ["Reportes de Checadas", "Carga de Checadas"].includes(m.nombre),
-  );
-  const finanzasModulos = modulos.filter((m) =>
-    ["Reportes de Gasto Q4", "Carga de Gasto Q4"].includes(m.nombre),
-  );
-  const comprasModulos = modulos.filter((m) =>
-    ["Solicitudes de Compra", "Cotizaciones de Compras", "Presupuestos de Compras", "Formatos de Compras", "Reportes de Compras", "Aprobadores de Compras"].includes(
-      m.nombre,
-    ),
-  );
-  const dashboardModulo = modulos.find((m) => m.nombre === "Dashboard");
+  const secciones = armarSecciones(modulos);
+  const tieneCargas = modulos.some((m) => MODULOS_DE_CARGA.has(m.nombre));
 
-  // Entrada al menú de reportes por área. No sale de la tabla `modulos`: es
-  // navegación, y lo que se puede abrir dentro ya se filtra por permisos.
-  const menuReportes = {
-    id: "__reportes__",
-    nombre: "Reportes por área",
-    ruta: "/reportes",
+  const estaPlegada = (s) => {
+    // La sección de la pantalla actual siempre se ve
+    if (s.items.some((m) => m.ruta && pathname.startsWith(m.ruta))) return false;
+    return plegadas[s.titulo] ?? Boolean(s.plegada);
   };
 
-  const renderNavItem = (modulo) => {
-    const Icon = iconMap[modulo.nombre] || LayoutDashboard;
-    const route = modulo.ruta || moduleRoutes[modulo.nombre] || "/dashboard";
-
-    return (
-      <NavLink
-        key={modulo.id}
-        to={route}
-        className={({ isActive }) => `
-          flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-          ${isActive ? "bg-primary text-white shadow-md" : "text-gray-600 hover:bg-gray-100"}
-          ${collapsed ? "justify-center" : ""}
-        `}
-        title={collapsed ? modulo.nombre : ""}
-      >
-        <Icon className="w-5 h-5 flex-shrink-0" />
-        {!collapsed && (
-          <span className="text-sm font-medium">{modulo.nombre}</span>
-        )}
-      </NavLink>
-    );
+  const alternar = (s) => {
+    const nuevo = { ...plegadas, [s.titulo]: !estaPlegada(s) };
+    setPlegadas(nuevo);
+    try {
+      localStorage.setItem(LLAVE_PLEGADAS, JSON.stringify(nuevo));
+    } catch {
+      // Sin almacenamiento solo no se recuerda
+    }
   };
 
-  const renderSection = (title, items) => {
-    if (items.length === 0) return null;
+  const renderNavItem = (item, Icon, texto) => (
+    <NavLink
+      key={item.id}
+      to={item.ruta || "/inicio"}
+      className={({ isActive }) => `
+        flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200
+        ${isActive ? "bg-primary text-white shadow-md" : "text-gray-600 hover:bg-gray-100"}
+        ${collapsed ? "justify-center" : ""}
+      `}
+      title={collapsed ? texto : ""}
+    >
+      <Icon className="w-5 h-5 flex-shrink-0" />
+      {!collapsed && <span className="text-sm font-medium">{texto}</span>}
+    </NavLink>
+  );
+
+  const renderSection = (s) => {
+    const plegada = !collapsed && estaPlegada(s);
     return (
-      <div className="mb-6">
+      <div key={s.titulo} className="mb-4">
         {!collapsed && (
-          <h3 className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-            {title}
-          </h3>
+          <button
+            onClick={() => alternar(s)}
+            className="w-full flex items-center justify-between px-3 mb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wider hover:text-gray-600"
+          >
+            {s.titulo}
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform ${plegada ? "-rotate-90" : ""}`} />
+          </button>
         )}
-        <nav className="space-y-1">{items.map(renderNavItem)}</nav>
+        {!plegada && (
+          <nav className="space-y-1">
+            {s.items.map((m) =>
+              renderNavItem(m, iconMap[m.nombre] || LayoutDashboard, ETIQUETAS[m.nombre] || m.nombre),
+            )}
+          </nav>
+        )}
       </div>
     );
   };
@@ -264,9 +222,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
               <span className="text-white font-bold text-sm">FC</span>
             </div>
             <div>
-              <h1 className="font-bold text-gray-900 text-sm">
-                Sistema Central
-              </h1>
+              <h1 className="font-bold text-gray-900 text-sm">Sistema Central</h1>
               <p className="text-xs text-gray-500">Foam Creations</p>
             </div>
           </div>
@@ -294,11 +250,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-20 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:shadow-md transition-shadow"
       >
-        {collapsed ? (
-          <ChevronRight className="w-4 h-4 text-gray-600" />
-        ) : (
-          <ChevronLeft className="w-4 h-4 text-gray-600" />
-        )}
+        {collapsed ? <ChevronRight className="w-4 h-4 text-gray-600" /> : <ChevronLeft className="w-4 h-4 text-gray-600" />}
       </button>
 
       {/* Navigation */}
@@ -306,31 +258,15 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
         {loading ? (
           <div className="space-y-2">
             {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="h-10 bg-gray-100 rounded-lg animate-pulse"
-              />
+              <div key={i} className="h-10 bg-gray-100 rounded-lg animate-pulse" />
             ))}
           </div>
         ) : (
           <>
-            <div className="mb-6 space-y-1">
-              {dashboardModulo && renderNavItem(dashboardModulo)}
-              {renderNavItem(menuReportes)}
+            <div className="mb-5 space-y-1">
+              {FIJAS.filter((f) => !f.soloConCargas || tieneCargas).map((f) => renderNavItem(f, f.icono, f.nombre))}
             </div>
-            {renderSection("Calidad", calidadModulos)}
-            {renderSection("Producción", produccionModulos)}
-            {renderSection("Moldes", moldesModulos)}
-            {renderSection("STAFF", staffModulos)}
-            {renderSection("Resultados", resultadosModulos)}
-            {renderSection("TI", tiModulos)}
-            {renderSection("Customer Service", customerServiceModulos)}
-            {renderSection("CAPEX", capexModulos)}
-            {renderSection("AIMS", aimsModulos)}
-            {renderSection("Recursos Humanos", rhModulos)}
-            {renderSection("Finanzas", finanzasModulos)}
-            {renderSection("Compras", comprasModulos)}
-            {renderSection("Administración", adminModulos)}
+            {secciones.map(renderSection)}
           </>
         )}
       </div>
@@ -339,9 +275,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
       <div className="p-4 border-t border-gray-200">
         {!collapsed && (
           <div className="mb-3 px-3">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.nombreCompleto}
-            </p>
+            <p className="text-sm font-medium text-gray-900 truncate">{user?.nombreCompleto}</p>
             <p className="text-xs text-gray-500">{user?.rol?.nombre}</p>
           </div>
         )}
@@ -351,9 +285,7 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
           title={collapsed ? "Cerrar sesión" : ""}
         >
           <LogOut className="w-5 h-5" />
-          {!collapsed && (
-            <span className="text-sm font-medium">Cerrar sesión</span>
-          )}
+          {!collapsed && <span className="text-sm font-medium">Cerrar sesión</span>}
         </button>
       </div>
     </aside>

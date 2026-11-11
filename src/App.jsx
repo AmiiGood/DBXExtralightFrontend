@@ -5,6 +5,8 @@ import MainLayout from "./components/layout/MainLayout";
 import PaginaInicio from "./components/layout/PaginaInicio";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
+import InicioPage from "./pages/inicio/InicioPage";
+import CargasPage from "./pages/cargas/CargasPage";
 import DefectosPage from "./pages/calidad/DefectosPage";
 import ReportesPage from "./pages/calidad/ReportesPage";
 import QrValidationPage from "./pages/calidad/QrValidationPage";
@@ -96,6 +98,8 @@ function App() {
           </ProtectedRoute>
         }
       >
+        <Route path="/inicio" element={<InicioPage />} />
+        <Route path="/cargas" element={<CargasPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
 
         {/* Menú de reportes: primero el área, luego el reporte */}

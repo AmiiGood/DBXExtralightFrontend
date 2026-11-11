@@ -3,9 +3,17 @@ import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import api from "../../services/api";
+import { useAuthStore } from "../../stores/auth.store";
+import { AREAS } from "../../config/areas";
+import { registrarReciente } from "../../utils/recientes";
+
+// Rutas de los reportes del índice por área: al abrir una se anota en "Recientes" de Inicio
+const RUTAS_DE_REPORTE = new Set(AREAS.flatMap((a) => a.reportes.map((r) => r.ruta).filter(Boolean)));
 
 const pageTitles = {
-  "/dashboard": "Dashboard",
+  "/inicio": "Inicio",
+  "/cargas": "Cargas de datos",
+  "/dashboard": "Tablero del turno",
   "/admin/usuarios": "Gestión de Usuarios",
   "/admin/logs": "Logs del Sistema",
   "/admin/catalogos": "Catálogos",
@@ -23,6 +31,11 @@ export default function MainLayout() {
   const [loadingModulos, setLoadingModulos] = useState(true);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
+  const usuarioId = useAuthStore((s) => s.user?.id);
+
+  useEffect(() => {
+    if (RUTAS_DE_REPORTE.has(location.pathname)) registrarReciente(usuarioId, location.pathname);
+  }, [location.pathname, usuarioId]);
 
   const pageTitle = pageTitles[location.pathname] || "Sistema Central";
 
