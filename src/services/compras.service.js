@@ -240,7 +240,7 @@ export const comprasService = {
     return data.data;
   },
 
-  /** Áreas y lo ya capturado en cada campo, para sugerirlo. */
+  /** Áreas, listas de tipos y cuentas, y lo ya capturado en los campos libres. */
   getOpcionesFormato: async () => {
     const { data } = await api.get("/compras/formatos/opciones");
     return data.data;
@@ -251,6 +251,22 @@ export const comprasService = {
     const { data } = id
       ? await api.put(`/compras/formatos/${id}`, formato)
       : await api.post("/compras/formatos", formato);
+    return data;
+  },
+
+  /** Agrega (sin id) o cambia (con id: nombre y activo) un tipo de compra. */
+  guardarTipo: async (id, tipo) => {
+    const { data } = id
+      ? await api.put(`/compras/formatos/catalogos/tipos/${id}`, tipo)
+      : await api.post("/compras/formatos/catalogos/tipos", tipo);
+    return data;
+  },
+
+  /** Agrega (nueva = true) o cambia una cuenta contable; el número es la llave. */
+  guardarCuenta: async (nueva, cuenta) => {
+    const { data } = nueva
+      ? await api.post("/compras/formatos/catalogos/cuentas", cuenta)
+      : await api.put(`/compras/formatos/catalogos/cuentas/${cuenta.codigo}`, cuenta);
     return data;
   },
 

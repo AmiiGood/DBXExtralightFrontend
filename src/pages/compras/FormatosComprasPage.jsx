@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
 import {
-  ClipboardPenLine, Loader2, Plus, Pencil, Trash2, Download, AlertTriangle, X, Save, Search,
+  ClipboardPenLine, Loader2, Plus, Pencil, Trash2, Download, AlertTriangle, X, Save, Search, ListChecks,
 } from "lucide-react";
 import { comprasService } from "../../services/compras.service";
 import { dinero } from "../../components/compras/formatoCompras";
 import { exportarFormatosCompras } from "../../utils/exportarFormatosCompras";
+import { SelectTipo, ComboCuenta } from "../../components/compras/CamposCatalogo";
+import ListasCompras from "../../components/compras/ListasCompras";
 
 /**
  * Formatos de Compras.
  *
  * Captura del "Formato de autorización y registro de compras" en papel, mientras
  * el flujo con firmas no está en el sistema, y su reporte. Quien firmó va como
- * texto; tipo, cuenta y centro de costos también, con sugerencias de lo ya
- * capturado, hasta que Compras y Finanzas manden sus listas.
+ * texto. Tipo y cuenta se escogen de las listas de Compras y Finanzas (quien
+ * puede editar las mantiene en "Listas"); centro de costos sigue libre, con
+ * sugerencias de lo ya capturado.
  *
  * Un formato se puede capturar a medias y completarse después: está completo
  * cuando tiene las cuatro firmas (gerente, Compras, Dirección y Finanzas).
@@ -80,6 +83,7 @@ function Formulario({ formato, opciones, onCerrar, onGuardado }) {
   const [error, setError] = useState(null);
   const poner = (campo) => (e) => setD((x) => ({ ...x, [campo]: e.target.value }));
   const sug = opciones?.sugerencias || {};
+  const cambiar = (campo) => (v) => setD((x) => ({ ...x, [campo]: v }));
 
   // Texto con sugerencias de lo ya capturado
   const texto = (campo, lista, extra = {}) => (
@@ -174,7 +178,9 @@ function Formulario({ formato, opciones, onCerrar, onGuardado }) {
           </Bloque>
 
           <Bloque titulo="Compras" firma>
-            <Campo etiqueta="Tipo">{texto("clasifTipo", "clasif_tipo")}</Campo>
+            <Campo etiqueta="Tipo">
+              <SelectTipo valor={d.clasifTipo} tipos={opciones?.tipos || []} onCambiar={cambiar("clasifTipo")} />
+            </Campo>
             <Campo etiqueta="Autorizó">{texto("autorizoCompras", "autorizo_compras")}</Campo>
             <p className="self-end pb-2 text-xs text-gray-400">El área es la del solicitante.</p>
           </Bloque>
@@ -186,7 +192,10 @@ function Formulario({ formato, opciones, onCerrar, onGuardado }) {
           </Bloque>
 
           <Bloque titulo="Finanzas" firma>
-            <Campo etiqueta="Cuenta">{texto("cuenta", "cuenta")}</Campo>
+            <div className="block">
+              <span className="block text-xs font-medium text-gray-500 mb-1">Cuenta</span>
+              <ComboCuenta valor={d.cuenta} cuentas={opciones?.cuentas || []} onCambiar={cambiar("cuenta")} />
+            </div>
             <Campo etiqueta="Centro de costos">{texto("centroCostos", "centro_costos")}</Campo>
             <Campo etiqueta="Autorizó">{texto("autorizoFinanzas", "autorizo_finanzas")}</Campo>
           </Bloque>
@@ -196,8 +205,8 @@ function Formulario({ formato, opciones, onCerrar, onGuardado }) {
           </Campo>
 
           <p className="text-xs text-gray-400">
-            Si al formato le falta una firma, captúralo así y complétalo después. Tipo, cuenta y centro de costos se
-            escriben a mano mientras llegan las listas de Compras y Finanzas; se sugiere lo ya capturado.
+            Si al formato le falta una firma, captúralo así y complétalo después. La cuenta se busca por número o por
+            nombre.
           </p>
 
           {error && (
@@ -312,6 +321,7 @@ export default function FormatosComprasPage() {
   const [version, setVersion] = useState(0);
   // null = cerrado; {} = nuevo; fila = corregir
   const [editando, setEditando] = useState(null);
+  const [listas, setListas] = useState(false);
 
   useEffect(() => {
     let vivo = true;
@@ -347,7 +357,7 @@ export default function FormatosComprasPage() {
       (!areaId || String(f.compras_area_id) === areaId) &&
       (!estado || (estado === "completos" ? f.completo : !f.completo)) &&
       (!q ||
-        [f.ticket, f.requerimiento, f.clasif_tipo, f.cuenta, f.centro_costos, f.observaciones, ...FIRMAS.map((x) => f[x.campo])]
+        [f.ticket, f.requerimiento, f.clasif_tipo, f.cuenta, f.cuenta_nombre, f.centro_costos, f.observaciones, ...FIRMAS.map((x) => f[x.campo])]
           .filter(Boolean)
           .some((v) => v.toLowerCase().includes(q))),
   );
@@ -417,6 +427,16 @@ export default function FormatosComprasPage() {
             <Download className="w-4 h-4" />
             Excel
           </button>
+          {permisos.editar && (
+            <button
+              onClick={() => setListas(true)}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
+              title="Tipos de compra y cuentas contables"
+            >
+              <ListChecks className="w-4 h-4" />
+              Listas
+            </button>
+          )}
           {permisos.crear && (
             <button
               onClick={() => {
@@ -513,7 +533,7 @@ export default function FormatosComprasPage() {
                   <th className="px-3 py-2 font-medium">Requerimiento</th>
                   <th className="px-3 py-2 font-medium text-right">Costo</th>
                   <th className="px-3 py-2 font-medium">Tipo</th>
-                  <th className="px-3 py-2 font-medium">Cuenta · CC</th>
+                  <th className="px-3 py-2 font-medium">Cuenta y CC</th>
                   <th className="px-3 py-2 font-medium">Firmas</th>
                   <th className="px-3 py-2" />
                 </tr>
@@ -546,8 +566,18 @@ export default function FormatosComprasPage() {
                       <td className="px-3 py-2 text-gray-700">
                         {f.clasif_tipo || "—"}
                       </td>
-                      <td className="px-3 py-2 text-gray-700 whitespace-nowrap">
-                        {f.cuenta || f.centro_costos ? `${f.cuenta || "—"} · ${f.centro_costos || "—"}` : "—"}
+                      <td className="px-3 py-2 text-gray-700 max-w-[16rem]">
+                        {f.cuenta ? (
+                          <>
+                            <span className="font-mono text-xs text-gray-600">{f.cuenta}</span>
+                            <span className={`block text-xs ${f.cuenta_nombre ? "text-gray-500" : "text-amber-700"}`}>
+                              {f.cuenta_nombre || "Fuera de la lista de Finanzas"}
+                            </span>
+                          </>
+                        ) : (
+                          "—"
+                        )}
+                        {f.centro_costos && <span className="block text-xs text-gray-700 mt-0.5">CC: {f.centro_costos}</span>}
                       </td>
                       <td className="px-3 py-2">
                         <Firmas f={f} />
@@ -582,6 +612,15 @@ export default function FormatosComprasPage() {
             </table>
           </div>
         </>
+      )}
+
+      {listas && (
+        <ListasCompras
+          opciones={opciones}
+          onCerrar={() => setListas(false)}
+          // Recarga formatos y listas: un tipo renombrado cambia los formatos
+          onCambio={() => setVersion((v) => v + 1)}
+        />
       )}
 
       {editando && (
