@@ -262,6 +262,14 @@ export const comprasService = {
     return data;
   },
 
+  /** Agrega (sin id) o cambia (con id) un área solicitante sin osTicket. */
+  guardarAreaSolicitante: async (id, area) => {
+    const { data } = id
+      ? await api.put(`/compras/formatos/catalogos/areas/${id}`, area)
+      : await api.post("/compras/formatos/catalogos/areas", area);
+    return data;
+  },
+
   /** Agrega (nueva = true) o cambia una cuenta contable; el número es la llave. */
   guardarCuenta: async (nueva, cuenta) => {
     const { data } = nueva

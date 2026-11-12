@@ -128,7 +128,7 @@ function Formulario({ formato, opciones, onCerrar, onGuardado }) {
         <div className="p-5 space-y-4">
           <Bloque titulo="Solicitud">
             <Campo etiqueta="No. de ticket">
-              <input value={d.ticket} onChange={poner("ticket")} placeholder="AD-…" className={estiloCampo} maxLength={32} />
+              <input value={d.ticket} onChange={poner("ticket")} placeholder="AD-… (si tiene)" className={estiloCampo} maxLength={32} />
             </Campo>
             <Campo etiqueta="Fecha *">
               <input type="date" value={d.fecha} onChange={poner("fecha")} required className={estiloCampo} />
@@ -431,7 +431,7 @@ export default function FormatosComprasPage() {
             <button
               onClick={() => setListas(true)}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-gray-200 rounded-lg text-gray-700 hover:bg-gray-50"
-              title="Tipos de compra y cuentas contables"
+              title="Tipos de compra, cuentas contables y áreas solicitantes"
             >
               <ListChecks className="w-4 h-4" />
               Listas
