@@ -12,6 +12,7 @@ const RUTAS_DE_REPORTE = new Set(AREAS.flatMap((a) => a.reportes.map((r) => r.ru
 
 const pageTitles = {
   "/inicio": "Inicio",
+  "/mi-firma": "Mi firma",
   "/cargas": "Cargas de datos",
   "/compras/tablero": "Tablero de Compras",
   "/dashboard": "Tablero del turno",

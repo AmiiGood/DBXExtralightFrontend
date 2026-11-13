@@ -8,6 +8,7 @@ import {
   ClipboardList,
   Settings,
   LogOut,
+  PenLine,
   ChevronLeft,
   ChevronRight,
   ChevronDown,
@@ -279,6 +280,18 @@ export default function Sidebar({ modulos = [], loading = false, onToggle }) {
             <p className="text-xs text-gray-500">{user?.rol?.nombre}</p>
           </div>
         )}
+        <NavLink
+          to="/mi-firma"
+          className={({ isActive }) =>
+            `w-full flex items-center gap-3 px-3 py-2 mb-1 rounded-lg transition-colors ${collapsed ? "justify-center" : ""} ${
+              isActive ? "bg-[#236093]/10 text-[#236093]" : "text-gray-600 hover:bg-gray-100"
+            }`
+          }
+          title={collapsed ? "Mi firma" : ""}
+        >
+          <PenLine className="w-5 h-5" />
+          {!collapsed && <span className="text-sm font-medium">Mi firma</span>}
+        </NavLink>
         <button
           onClick={handleLogout}
           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-red-600 hover:bg-red-50 transition-colors ${collapsed ? "justify-center" : ""}`}

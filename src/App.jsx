@@ -6,6 +6,7 @@ import PaginaInicio from "./components/layout/PaginaInicio";
 import LoginPage from "./pages/auth/LoginPage";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import InicioPage from "./pages/inicio/InicioPage";
+import MiFirmaPage from "./pages/firmas/MiFirmaPage";
 import CargasPage from "./pages/cargas/CargasPage";
 import DefectosPage from "./pages/calidad/DefectosPage";
 import ReportesPage from "./pages/calidad/ReportesPage";
@@ -100,6 +101,8 @@ function App() {
         }
       >
         <Route path="/inicio" element={<InicioPage />} />
+        {/* Sin módulo: cualquiera que vaya a firmar algo registra aquí su firma */}
+        <Route path="/mi-firma" element={<MiFirmaPage />} />
         <Route path="/cargas" element={<CargasPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
 
