@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { comprasService } from "../../services/compras.service";
 import AvisosCompras from "../../components/compras/AvisosCompras";
+import FirmantesOrden from "../../components/compras/FirmantesOrden";
 
 /**
  * Quién aprueba las solicitudes de Compra de cada área.
@@ -372,6 +373,8 @@ export default function AprobadoresComprasPage() {
           </tbody>
         </table>
       </div>
+
+      <FirmantesOrden usuarios={datos.usuarios} />
 
       <Envios />
 

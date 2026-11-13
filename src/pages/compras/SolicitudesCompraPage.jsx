@@ -23,12 +23,16 @@ import {
   RotateCcw,
   Hourglass,
   Lightbulb,
+  FileSignature,
+  PenLine,
 } from "lucide-react";
 import { comprasService } from "../../services/compras.service";
 import ArchivoCompras from "../../components/compras/ArchivoCompras";
 import Comparativo from "../../components/compras/Comparativo";
 import PresupuestoArea from "../../components/compras/PresupuestoArea";
 import { dinero } from "../../components/compras/formatoCompras";
+import FirmasOrden from "../../components/compras/FirmasOrden";
+import ConfirmarFirma from "../../components/firmas/ConfirmarFirma";
 
 /**
  * Solicitudes de Compra.
@@ -53,6 +57,10 @@ const ESTADOS = {
   DECIDIDA: { texto: "Compras decidió", clase: "bg-teal-50 text-teal-700 border-teal-200", icono: BadgeCheck },
   // Las de antes del 13-nov-2026: las elegía quien pidió
   ELEGIDA: { texto: "Proveedor elegido", clase: "bg-teal-50 text-teal-700 border-teal-200", icono: BadgeCheck },
+  // La orden de compra
+  EN_FIRMAS: { texto: "Orden en firmas", clase: "bg-amber-50 text-amber-700 border-amber-200", icono: FileSignature },
+  AUTORIZADA: { texto: "Autorizada", clase: "bg-green-50 text-green-700 border-green-200", icono: CheckCircle2 },
+  NO_AUTORIZADA: { texto: "Orden rechazada", clase: "bg-red-50 text-red-700 border-red-200", icono: XCircle },
 };
 
 const EVENTOS = {
@@ -67,9 +75,23 @@ const EVENTOS = {
   SUGERIDA: "Dio su sugerencia técnica",
   DECIDIDA: "Compras decidió",
   ELEGIDA: "Eligió proveedor",
+  OC_ENVIADA: "Envió la orden de compra",
+  OC_FIRMA_GERENTE: "Firmó la orden",
+  OC_FIRMA_COMPRAS: "Firmó la orden",
+  OC_FIRMA_FINANZAS: "Firmó la orden",
+  OC_FIRMA_DIRECCION: "Firmó la orden",
+  OC_AUTORIZADA: "Orden de compra autorizada",
+  OC_RECHAZADA: "Rechazó la orden de compra",
 };
 
-const COMO = { GERENTE: "gerente", SUPLENTE: "suplente", PROPIA: "la pidió el gerente" };
+const COMO = {
+  GERENTE: "gerente",
+  SUPLENTE: "suplente",
+  PROPIA: "la pidió el gerente",
+  COMPRAS: "Compras",
+  FINANZAS: "Finanzas",
+  DIRECCION: "Dirección",
+};
 
 const fecha = (s) =>
   s
@@ -331,6 +353,9 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
   const [notaSugerencia, setNotaSugerencia] = useState("");
   const [pidiendoOtras, setPidiendoOtras] = useState(false);
   const [motivo, setMotivo] = useState("");
+  // Orden de compra: comentario y, si es el gerente, la ventana del PIN
+  const [notaOrden, setNotaOrden] = useState("");
+  const [firmandoOrden, setFirmandoOrden] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -356,6 +381,7 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
       setNotaSugerencia("");
       setPidiendoOtras(false);
       setMotivo("");
+      setNotaOrden("");
       await cargar();
       onCambio();
     } catch (e) {
@@ -398,7 +424,8 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                   : "Aprobada. Se está creando el ticket en Compras."}
             </p>
           )}
-          {["EN_COMPRAS", "COTIZADA", "SUGERIDA", "DECIDIDA", "ELEGIDA"].includes(sol.estado) && sol.osticket_numero && (
+          {["EN_COMPRAS", "COTIZADA", "SUGERIDA", "DECIDIDA", "ELEGIDA", "EN_FIRMAS", "AUTORIZADA", "NO_AUTORIZADA"].includes(sol.estado) &&
+            sol.osticket_numero && (
             <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
               Ticket de Compras <b>{sol.osticket_numero}</b>
               {sol.asignado_nombre && <> · lo atiende {sol.asignado_nombre}</>}
@@ -442,13 +469,13 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                   )}
                 </p>
               )}
-              {sol.estado === "DECIDIDA" && (
+              {["DECIDIDA", "EN_FIRMAS", "AUTORIZADA", "NO_AUTORIZADA"].includes(sol.estado) && (
                 <div className="text-sm text-teal-800 bg-teal-50 rounded-lg px-3 py-2">
                   <BadgeCheck className="w-4 h-4 inline -mt-0.5 mr-1" />
                   {sol.elegido_por_nombre || "Compras"} decidió{" "}
                   <b>{sol.cotizacion.opciones.find((o) => o.id === sol.opcion_elegida_id)?.proveedor}</b> por{" "}
                   <b>{dinero(sol.monto_elegido, sol.moneda_elegida)}</b>
-                  {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"} el {fecha(sol.elegido_en)}.
+                  {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"} el {fecha(sol.elegido_en)}
                   {sol.opcion_sugerida_id && sol.opcion_sugerida_id !== sol.opcion_elegida_id && (
                     <span className="block mt-0.5">
                       Se había sugerido a {sol.cotizacion.opciones.find((o) => o.id === sol.opcion_sugerida_id)?.proveedor}.
@@ -458,9 +485,11 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                   {(!sol.opcion_sugerida_id || sol.opcion_sugerida_id === sol.opcion_elegida_id) && sol.decision_nota && (
                     <span className="block mt-0.5">Comentó: “{sol.decision_nota}”</span>
                   )}
-                  <span className="block text-xs text-teal-700/80 mt-0.5">
-                    Lo siguiente es la orden de compra, sobre el mismo ticket.
-                  </span>
+                  {sol.estado === "DECIDIDA" && !sol.permisos.enviarOrden && (
+                    <span className="block text-xs text-teal-700/80 mt-0.5">
+                      Lo siguiente es que {sol.solicitante_nombre} mande la orden de compra.
+                    </span>
+                  )}
                 </div>
               )}
               {sol.estado === "ELEGIDA" && (
@@ -569,6 +598,76 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                   </div>
                 )
               )}
+            </div>
+          )}
+
+          {/* --- Orden de compra --- */}
+          {sol.permisos.enviarOrden && (
+            <div className="rounded-lg border border-[#236093]/30 bg-[#236093]/5 p-4 space-y-3">
+              <p className="text-sm text-gray-800 flex items-start gap-2">
+                <FileSignature className="w-4 h-4 mt-0.5 text-[#236093] shrink-0" />
+                <span>
+                  Compras ya decidió. Manda la <b>orden de compra</b> para que la firmen
+                  {sol.permisos.firmaAlEnviar ? " " : " tu gerente, "}Compras, Finanzas y Dirección.
+                  {sol.permisos.firmaAlEnviar && (
+                    <span className="block text-xs text-gray-500 mt-0.5">
+                      Como eres el gerente del área, tu firma va al mandarla: te pide tu PIN.
+                    </span>
+                  )}
+                </span>
+              </p>
+              <textarea
+                value={notaOrden}
+                onChange={(e) => setNotaOrden(e.target.value)}
+                rows={2}
+                maxLength={1000}
+                placeholder="Comentario para quienes firman (opcional): para qué es, si urge…"
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#236093]/30"
+              />
+              <div className="flex justify-end">
+                <button
+                  disabled={trabajando}
+                  onClick={() =>
+                    sol.permisos.firmaAlEnviar
+                      ? setFirmandoOrden(true)
+                      : accion(() => comprasService.enviarOrden(sol.id, { comentario: notaOrden }))
+                  }
+                  className="flex items-center gap-2 px-4 py-2 text-sm bg-[#236093] text-white rounded-lg hover:bg-[#1c4d76] disabled:opacity-50"
+                >
+                  {trabajando ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : sol.permisos.firmaAlEnviar ? (
+                    <PenLine className="w-4 h-4" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )}
+                  {sol.permisos.firmaAlEnviar ? "Firmar y mandar la orden" : "Mandar la orden de compra"}
+                </button>
+              </div>
+            </div>
+          )}
+          {sol.orden && (
+            <div className="space-y-2">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Orden de compra</h3>
+              {sol.orden.estado === "AUTORIZADA" && (
+                <p className="text-sm text-green-800 bg-green-50 rounded-lg px-3 py-2">
+                  <CheckCircle2 className="w-4 h-4 inline -mt-0.5 mr-1" />
+                  Autorizada el {fecha(sol.orden.terminada_en)}. Compras sigue con la compra sobre el mismo ticket.
+                  {sol.monto_presupuesto != null && (
+                    <span className="block text-xs text-green-700/80 mt-0.5">
+                      Se descontaron {dinero(sol.monto_presupuesto)} del presupuesto del área (sin IVA, en pesos).
+                    </span>
+                  )}
+                </p>
+              )}
+              {sol.orden.estado === "RECHAZADA" && (
+                <p className="text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">
+                  <XCircle className="w-4 h-4 inline -mt-0.5 mr-1" />
+                  {sol.orden.rechazada_por_nombre} la rechazó el {fecha(sol.orden.terminada_en)}: “{sol.orden.motivo_rechazo}”. La
+                  solicitud termina aquí.
+                </p>
+              )}
+              <FirmasOrden orden={sol.orden} />
             </div>
           )}
 
@@ -681,6 +780,29 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
           )}
         </div>
       )}
+
+      {/* El gerente que pidió firma al mandar la orden; si el PIN falla, el error sale en la ventana */}
+      {firmandoOrden && sol && (
+        <ConfirmarFirma
+          titulo="Firmar y mandar la orden de compra"
+          como="Gerente del área (la pidió)"
+          textoBoton="Firmar y mandar"
+          onCerrar={() => setFirmandoOrden(false)}
+          onConfirmar={async (pin) => {
+            const r = await comprasService.enviarOrden(sol.id, { comentario: notaOrden, pin });
+            setFirmandoOrden(false);
+            setNotaOrden("");
+            setAviso({ ok: true, texto: r.message });
+            await cargar();
+            onCambio();
+          }}
+        >
+          <p>
+            {sol.folio} · <b>{sol.cotizacion?.opciones.find((o) => o.id === sol.opcion_elegida_id)?.proveedor}</b> ·{" "}
+            {dinero(sol.monto_elegido, sol.moneda_elegida)}
+          </p>
+        </ConfirmarFirma>
+      )}
     </Modal>
   );
 }
@@ -759,7 +881,7 @@ export default function SolicitudesCompraPage() {
   const varias = contexto.aprueba.length > 1;
 
   const pestanas = [
-    { id: "mias", texto: "Mis solicitudes", icono: ShoppingCart, contador: contexto.porElegir },
+    { id: "mias", texto: "Mis solicitudes", icono: ShoppingCart, contador: contexto.porElegir + (contexto.porEnviarOrden || 0) },
     ...(apruebaAlgo
       ? [
           { id: "pendientes", texto: "Por aprobar", icono: Inbox, contador: contexto.pendientes },
@@ -810,6 +932,15 @@ export default function SolicitudesCompraPage() {
           {contexto.porElegir === 1
             ? "Compras te mandó opciones de proveedores en una solicitud: ábrela y da tu sugerencia técnica."
             : `Compras te mandó opciones de proveedores en ${contexto.porElegir} solicitudes: ábrelas y da tu sugerencia técnica.`}
+        </div>
+      )}
+
+      {contexto.porEnviarOrden > 0 && (
+        <div className="flex items-center gap-2 text-sm text-[#236093] bg-[#236093]/5 border border-[#236093]/20 rounded-xl px-4 py-3">
+          <FileSignature className="w-4 h-4 shrink-0" />
+          {contexto.porEnviarOrden === 1
+            ? "Compras ya decidió una de tus solicitudes: ábrela y manda la orden de compra."
+            : `Compras ya decidió ${contexto.porEnviarOrden} de tus solicitudes: ábrelas y manda la orden de compra.`}
         </div>
       )}
 
@@ -901,7 +1032,7 @@ export default function SolicitudesCompraPage() {
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <Estado estado={s.estado} />
                     {s.osticket_numero && <span className="ml-2 text-xs text-gray-500">{s.osticket_numero}</span>}
-                    {["DECIDIDA", "ELEGIDA"].includes(s.estado) && s.monto_elegido != null && (
+                    {["DECIDIDA", "ELEGIDA", "EN_FIRMAS", "AUTORIZADA", "NO_AUTORIZADA"].includes(s.estado) && s.monto_elegido != null && (
                       <span className="block text-xs text-gray-600 mt-0.5">{dinero(s.monto_elegido, s.moneda_elegida)}</span>
                     )}
                   </td>

@@ -216,6 +216,48 @@ export const comprasService = {
   },
 
   // -------------------------------------------------------------------------
+  // Orden de compra
+  // -------------------------------------------------------------------------
+
+  /** Quien pidió manda la orden de compra (con su PIN si es el gerente). */
+  enviarOrden: async (solicitudId, { comentario, pin } = {}) => {
+    const { data } = await api.post(`/compras/solicitudes/${solicitudId}/orden`, { comentario, pin });
+    return data;
+  },
+
+  /** @param {String} vista  por-firmar | firmadas | todas */
+  getOrdenes: async (vista = "por-firmar") => {
+    const { data } = await api.get(`/compras/ordenes?vista=${vista}`);
+    return data.data;
+  },
+
+  getOrden: async (id) => {
+    const { data } = await api.get(`/compras/ordenes/${id}`);
+    return data.data;
+  },
+
+  /** { pin, tipo?, cuenta?, centroCostos?, comentario? } */
+  firmarOrden: async (id, datos) => {
+    const { data } = await api.post(`/compras/ordenes/${id}/firmar`, datos);
+    return data;
+  },
+
+  rechazarOrden: async (id, motivo) => {
+    const { data } = await api.post(`/compras/ordenes/${id}/rechazar`, { motivo });
+    return data;
+  },
+
+  getFirmantes: async () => {
+    const { data } = await api.get("/compras/ordenes/firmantes");
+    return data.data;
+  },
+
+  guardarFirmantes: async (firmantes) => {
+    const { data } = await api.put("/compras/ordenes/firmantes", firmantes);
+    return data;
+  },
+
+  // -------------------------------------------------------------------------
   // Presupuestos por área
   // -------------------------------------------------------------------------
 

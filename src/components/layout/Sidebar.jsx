@@ -24,6 +24,7 @@ import {
   Scale,
   PiggyBank,
   ClipboardPenLine,
+  FileSignature,
 } from "lucide-react";
 import { useAuthStore } from "../../stores/auth.store";
 import { MODULOS_DE_REPORTE } from "../../config/areas";
@@ -46,7 +47,13 @@ import { MODULOS_DE_CARGA } from "../../config/cargas";
 const SECCIONES = [
   {
     titulo: "Compras",
-    modulos: ["Solicitudes de Compra", "Cotizaciones de Compras", "Presupuestos de Compras", "Formatos de Compras"],
+    modulos: [
+      "Solicitudes de Compra",
+      "Cotizaciones de Compras",
+      "Órdenes de compra",
+      "Presupuestos de Compras",
+      "Formatos de Compras",
+    ],
   },
   {
     titulo: "Calidad",
@@ -87,6 +94,7 @@ const iconMap = {
   "Cotizaciones de Compras": Scale,
   "Presupuestos de Compras": PiggyBank,
   "Formatos de Compras": ClipboardPenLine,
+  "Órdenes de compra": FileSignature,
 };
 
 const FIJAS = [

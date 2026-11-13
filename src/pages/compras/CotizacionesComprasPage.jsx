@@ -41,6 +41,13 @@ const EVENTOS = {
   SUGERIDA: "Dio su sugerencia técnica",
   DECIDIDA: "Compras decidió",
   ELEGIDA: "Eligió proveedor",
+  OC_ENVIADA: "Envió la orden de compra",
+  OC_FIRMA_GERENTE: "Firmó el gerente",
+  OC_FIRMA_COMPRAS: "Firmó Compras",
+  OC_FIRMA_FINANZAS: "Firmó Finanzas",
+  OC_FIRMA_DIRECCION: "Firmó Dirección",
+  OC_AUTORIZADA: "Orden de compra autorizada",
+  OC_RECHAZADA: "Rechazó la orden de compra",
 };
 
 const fecha = (s) =>
@@ -201,8 +208,11 @@ function Detalle({ id, onCerrar, onCambio }) {
                     {
                       COTIZADA: "Opciones enviadas · esperando la sugerencia de quien pidió",
                       SUGERIDA: "Opciones enviadas · ya sugirió, te toca decidir",
-                      DECIDIDA: "Opciones enviadas · decidida",
+                      DECIDIDA: "Opciones enviadas · decidida · falta que quien pidió mande la orden de compra",
                       ELEGIDA: "Opciones enviadas · ya eligió",
+                      EN_FIRMAS: "Opciones enviadas · decidida · orden de compra en firmas",
+                      AUTORIZADA: "Opciones enviadas · decidida · orden de compra autorizada",
+                      NO_AUTORIZADA: "Opciones enviadas · decidida · orden de compra rechazada",
                     }[sol.estado]
                   }
                 </h3>
@@ -289,7 +299,7 @@ function Detalle({ id, onCerrar, onCambio }) {
                   </div>
                 )}
 
-                {sol.estado === "DECIDIDA" && (
+                {["DECIDIDA", "EN_FIRMAS", "AUTORIZADA", "NO_AUTORIZADA"].includes(sol.estado) && (
                   <div className="mt-3 text-sm text-teal-800 bg-teal-50 rounded-lg px-3 py-2">
                     <BadgeCheck className="w-4 h-4 inline -mt-0.5 mr-1" />
                     {sol.elegido_por_nombre || "Compras"} decidió{" "}

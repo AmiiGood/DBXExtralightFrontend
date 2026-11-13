@@ -15,6 +15,7 @@ const pageTitles = {
   "/mi-firma": "Mi firma",
   "/cargas": "Cargas de datos",
   "/compras/tablero": "Tablero de Compras",
+  "/compras/ordenes": "Órdenes de compra",
   "/dashboard": "Tablero del turno",
   "/admin/usuarios": "Gestión de Usuarios",
   "/admin/logs": "Logs del Sistema",
