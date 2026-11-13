@@ -16,7 +16,9 @@ import { exportarTableroCompras } from "../../utils/exportarTableroCompras";
  *
  * Dos gráficas siguen los renglones del P&L de Finanzas (MANUTENZIONE y ALTRI
  * COSTI FISSI): el gasto de las cuentas de cada renglón, juntando las que
- * tienen el mismo concepto. Una cuenta puede estar en los dos.
+ * tienen el mismo concepto. Una cuenta puede estar en los dos. Lo que se
+ * compra con cuentas que no están en ninguno de los dos va a "Otros gastos",
+ * por cuenta.
  *
  * Gráficas: una serie cada una, en el azul del DBX. El rojo solo marca un área
  * que rebasó su presupuesto, y siempre va con la palabra "Rebasa".
@@ -63,17 +65,18 @@ function Tarjeta({ titulo, nota, children, className = "" }) {
 }
 
 /** Un renglón del P&L: gasto por concepto, con los conceptos sin gasto al final. */
-function GrupoCuentas({ g, moneda, sinCuenta }) {
+function GrupoCuentas({ g, moneda, sinCuenta, como = "por concepto, con las cuentas de Finanzas", vacio }) {
   const titulo = g.grupo.charAt(0) + g.grupo.slice(1).toLowerCase();
   const max = Math.max(1, ...g.conceptos.map((c) => c.total));
   const nota = [
-    `${dinero(g.total, moneda)} en ${g.n} ${g.n === 1 ? "compra" : "compras"} · por concepto, con las cuentas de Finanzas`,
+    `${dinero(g.total, moneda)} en ${g.n} ${g.n === 1 ? "compra" : "compras"} · ${como}`,
     sinCuenta ? `${sinCuenta} ${sinCuenta === 1 ? "compra sin cuenta capturada no entra" : "compras sin cuenta capturada no entran"}` : null,
   ]
     .filter(Boolean)
     .join(" · ");
   return (
     <Tarjeta titulo={`${titulo}${EN_ESPANOL[g.grupo] ? ` (${EN_ESPANOL[g.grupo]})` : ""}`} nota={nota}>
+      {g.conceptos.length === 0 && vacio && <p className="text-sm text-gray-400 py-6 text-center">{vacio}</p>}
       <ul className="space-y-2.5">
         {g.conceptos.map((c) => {
           const cuentas = c.cuentas.map((x) => `${x.codigo} ${x.nombre}`).join("\n");
@@ -155,7 +158,8 @@ export default function TableroComprasPage() {
     .reduce((s, p) => s + p.monto_mxn, 0);
   const presupuesto = aMoneda(presupuestoMxn);
   const disponible = presupuesto == null ? null : presupuesto - gasto;
-  const esperanDireccion = formatos.filter((f) => f.firmo_gerente && !f.firmo_direccion).length;
+  // Dirección firma al final: cuentan las que ya tienen las otras tres firmas
+  const esperanDireccion = formatos.filter((f) => f.espera_direccion).length;
 
   // Por área: gasto contra presupuesto
   const porArea = (datos?.areas || [])
@@ -225,6 +229,23 @@ export default function TableroComprasPage() {
     g.conceptos.sort((a, b) => b.total - a.total || a.nombre.localeCompare(b.nombre, "es"));
   }
 
+  // Otros gastos: compras con cuenta que no está en ningún renglón, una barra por cuenta
+  const enGrupo = new Set((datos?.gruposCuenta || []).map((r) => r.codigo));
+  const otros = { grupo: "OTROS GASTOS", conceptos: [], total: 0, n: 0 };
+  for (const f of conMonto) {
+    if (!f.cuenta || enGrupo.has(f.cuenta)) continue;
+    let c = otros.conceptos.find((x) => x.clave === f.cuenta);
+    if (!c) {
+      const nombre = f.cuenta_nombre || "fuera de la lista de Finanzas";
+      otros.conceptos.push((c = { clave: f.cuenta, nombre: `${f.cuenta} · ${nombre}`, cuentas: [{ codigo: f.cuenta, nombre }], total: 0, n: 0 }));
+    }
+    c.total += f[campo];
+    c.n += 1;
+    otros.total += f[campo];
+    otros.n += 1;
+  }
+  otros.conceptos.sort((a, b) => b.total - a.total);
+
   const grandes = [...conMonto].sort((a, b) => b[campo] - a[campo]).slice(0, 10);
   const nombreArea = (datos?.areas || []).find((a) => String(a.id) === areaId)?.nombre;
 
@@ -241,7 +262,7 @@ export default function TableroComprasPage() {
       porArea,
       meses,
       porTipo,
-      grupos,
+      grupos: grupos.length ? [...grupos, otros] : [],
       formatos: conMonto,
       campo,
       notas: [
@@ -353,7 +374,7 @@ export default function TableroComprasPage() {
             <Kpi
               titulo="Esperan firma de Dirección"
               valor={esperanDireccion}
-              detalle={esperanDireccion ? "Ya autorizadas por el gerente" : "Ninguna pendiente"}
+              detalle={esperanDireccion ? "Ya firmaron gerente, Compras y Finanzas" : "Ninguna pendiente"}
             />
           </div>
 
@@ -421,6 +442,13 @@ export default function TableroComprasPage() {
               {grupos.map((g) => (
                 <GrupoCuentas key={g.grupo} g={g} moneda={moneda} sinCuenta={sinCuenta} />
               ))}
+              <GrupoCuentas
+                g={otros}
+                moneda={moneda}
+                sinCuenta={sinCuenta}
+                como={`por cuenta, las que no están en ${grupos.map((g) => g.grupo.charAt(0) + g.grupo.slice(1).toLowerCase()).join(" ni en ")}`}
+                vacio="Todas las compras del periodo con cuenta caen en los renglones de arriba."
+              />
             </div>
           )}
 

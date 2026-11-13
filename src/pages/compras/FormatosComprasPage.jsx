@@ -18,14 +18,14 @@ import ListasCompras from "../../components/compras/ListasCompras";
  * sugerencias de lo ya capturado.
  *
  * Un formato se puede capturar a medias y completarse después: está completo
- * cuando tiene las cuatro firmas (gerente, Compras, Dirección y Finanzas).
+ * cuando tiene las cuatro firmas (gerente, Compras, Finanzas y, al final, Dirección).
  */
 
 const FIRMAS = [
   { campo: "autorizo_gerente", corto: "G", nombre: "Gerente" },
   { campo: "autorizo_compras", corto: "C", nombre: "Compras" },
-  { campo: "autorizo_direccion", corto: "D", nombre: "Dirección" },
   { campo: "autorizo_finanzas", corto: "F", nombre: "Finanzas" },
+  { campo: "autorizo_direccion", corto: "D", nombre: "Dirección" },
 ];
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
@@ -185,12 +185,6 @@ function Formulario({ formato, opciones, onCerrar, onGuardado }) {
             <p className="self-end pb-2 text-xs text-gray-400">El área es la del solicitante.</p>
           </Bloque>
 
-          <Bloque titulo="Dirección / Gerencia de Operaciones" firma>
-            <Campo etiqueta="Autorizó" className="sm:col-span-2">
-              {texto("autorizoDireccion", "autorizo_direccion")}
-            </Campo>
-          </Bloque>
-
           <Bloque titulo="Finanzas" firma>
             <div className="block">
               <span className="block text-xs font-medium text-gray-500 mb-1">Cuenta</span>
@@ -198,6 +192,12 @@ function Formulario({ formato, opciones, onCerrar, onGuardado }) {
             </div>
             <Campo etiqueta="Centro de costos">{texto("centroCostos", "centro_costos")}</Campo>
             <Campo etiqueta="Autorizó">{texto("autorizoFinanzas", "autorizo_finanzas")}</Campo>
+          </Bloque>
+
+          <Bloque titulo="Dirección / Gerencia de Operaciones · última firma" firma>
+            <Campo etiqueta="Autorizó" className="sm:col-span-2">
+              {texto("autorizoDireccion", "autorizo_direccion")}
+            </Campo>
           </Bloque>
 
           <Campo etiqueta="Observaciones">
