@@ -7,6 +7,7 @@ import PresupuestoArea from "../../components/compras/PresupuestoArea";
 import FirmasOrden from "../../components/compras/FirmasOrden";
 import { SelectTipo, ComboCuenta } from "../../components/compras/CamposCatalogo";
 import ConfirmarFirma from "../../components/firmas/ConfirmarFirma";
+import BotonPdfOrden from "../../components/compras/BotonPdfOrden";
 import { dinero } from "../../components/compras/formatoCompras";
 
 /**
@@ -163,6 +164,9 @@ function Detalle({ id, onCerrar, onCambio }) {
                 {o.asignado_nombre && ` · lo atiende ${o.asignado_nombre}`}
               </span>
               <span>Enviada {fecha(o.enviada_en)}</span>
+              <span className="ml-auto">
+                <BotonPdfOrden ordenId={o.id} />
+              </span>
             </div>
 
             {aviso && <div className="text-sm rounded-lg px-3 py-2 bg-green-50 text-green-800">{aviso}</div>}

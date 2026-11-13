@@ -33,6 +33,7 @@ import PresupuestoArea from "../../components/compras/PresupuestoArea";
 import { dinero } from "../../components/compras/formatoCompras";
 import FirmasOrden from "../../components/compras/FirmasOrden";
 import ConfirmarFirma from "../../components/firmas/ConfirmarFirma";
+import BotonPdfOrden from "../../components/compras/BotonPdfOrden";
 
 /**
  * Solicitudes de Compra.
@@ -648,7 +649,10 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
           )}
           {sol.orden && (
             <div className="space-y-2">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Orden de compra</h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Orden de compra</h3>
+                <BotonPdfOrden ordenId={sol.orden.id} />
+              </div>
               {sol.orden.estado === "AUTORIZADA" && (
                 <p className="text-sm text-green-800 bg-green-50 rounded-lg px-3 py-2">
                   <CheckCircle2 className="w-4 h-4 inline -mt-0.5 mr-1" />

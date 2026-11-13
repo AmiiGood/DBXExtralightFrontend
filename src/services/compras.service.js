@@ -242,6 +242,12 @@ export const comprasService = {
     return data;
   },
 
+  /** El formato de autorización con las firmas, como PDF (blob). */
+  pdfOrden: async (id) => {
+    const { data } = await api.get(`/compras/ordenes/${id}/pdf`, { responseType: "blob", timeout: 0 });
+    return data;
+  },
+
   rechazarOrden: async (id, motivo) => {
     const { data } = await api.post(`/compras/ordenes/${id}/rechazar`, { motivo });
     return data;

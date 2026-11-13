@@ -7,6 +7,7 @@ import { dinero } from "../../components/compras/formatoCompras";
 import { exportarFormatosCompras } from "../../utils/exportarFormatosCompras";
 import { SelectTipo, ComboCuenta } from "../../components/compras/CamposCatalogo";
 import ListasCompras from "../../components/compras/ListasCompras";
+import BotonPdfOrden from "../../components/compras/BotonPdfOrden";
 
 /**
  * Formatos de Compras.
@@ -413,8 +414,8 @@ export default function FormatosComprasPage() {
           <div>
             <h1 className="text-xl font-bold text-gray-900">Formatos de Compras</h1>
             <p className="text-sm text-gray-500">
-              Los formatos de autorización en papel, capturados para tener reportes mientras el flujo con firmas llega al
-              sistema
+              Los formatos de autorización: las órdenes firmadas en el DBX entran solas al autorizarse (sin IVA); los de
+              papel se capturan aquí
             </p>
           </div>
         </div>
@@ -553,6 +554,11 @@ export default function FormatosComprasPage() {
                       <td className="px-3 py-2 text-gray-700">{f.area_nombre}</td>
                       <td className="px-3 py-2 text-gray-900 max-w-xs">
                         {f.requerimiento}
+                        {f.orden_id && (
+                          <span className="inline-flex items-center ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-[#236093]/10 text-[#236093] align-middle">
+                            Firmado en el DBX
+                          </span>
+                        )}
                         {f.observaciones && <span className="block text-xs text-gray-400">{f.observaciones}</span>}
                       </td>
                       <td className="px-3 py-2 text-right whitespace-nowrap tabular-nums">
@@ -583,7 +589,9 @@ export default function FormatosComprasPage() {
                         <Firmas f={f} />
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-right">
-                        {puedeCorregir(f) && (
+                        {/* Lo firmado en el DBX no se corrige aquí: se ve su PDF */}
+                        {f.orden_id && <BotonPdfOrden ordenId={f.orden_id} compacto />}
+                        {!f.orden_id && puedeCorregir(f) && (
                           <button
                             onClick={() => {
                               setAviso(null);
@@ -595,7 +603,7 @@ export default function FormatosComprasPage() {
                             <Pencil className="w-4 h-4" />
                           </button>
                         )}
-                        {permisos.eliminar && (
+                        {!f.orden_id && permisos.eliminar && (
                           <button
                             onClick={() => borrar(f)}
                             className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50"

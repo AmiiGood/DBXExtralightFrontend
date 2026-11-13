@@ -159,7 +159,10 @@ export default function TableroComprasPage() {
   const presupuesto = aMoneda(presupuestoMxn);
   const disponible = presupuesto == null ? null : presupuesto - gasto;
   // Dirección firma al final: cuentan las que ya tienen las otras tres firmas
-  const esperanDireccion = formatos.filter((f) => f.espera_direccion).length;
+  // (formatos en papel y órdenes del DBX que ya tienen las otras tres firmas)
+  const esperanDireccion =
+    formatos.filter((f) => f.espera_direccion).length +
+    (datos?.ordenesDireccion || []).filter((o) => !areaId || String(o.area_id) === areaId).length;
 
   // Por área: gasto contra presupuesto
   const porArea = (datos?.areas || [])
@@ -269,7 +272,7 @@ export default function TableroComprasPage() {
         ["Periodo", `${datos.desde} a ${datos.hasta}`],
         ["Área", nombreArea || "Todas"],
         ["Moneda", moneda === "USD" ? "Dólares" : "Pesos"],
-        ["Gasto", "Formatos de autorización capturados, tal como vienen en el formato (pueden incluir IVA)"],
+        ["Gasto", "Formatos de autorización: los de papel tal como vienen (pueden incluir IVA); las órdenes firmadas en el DBX, sin IVA"],
         ["Presupuesto", "Presupuesto de Compras de los meses del periodo, sin IVA"],
         ["Tipo de cambio", "FIX de Banxico del día de cada formato; el presupuesto en dólares usa el FIX más reciente" + (tc ? ` (${tc} del ${datos.tipoCambio.fecha})` : "")],
       ],
