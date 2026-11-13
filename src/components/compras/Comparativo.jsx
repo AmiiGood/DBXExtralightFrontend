@@ -1,4 +1,4 @@
-import { CheckCircle2, Award, AlertTriangle, Loader2 } from "lucide-react";
+import { CheckCircle2, Award, AlertTriangle, Loader2, Lightbulb } from "lucide-react";
 import ArchivoCompras from "./ArchivoCompras";
 import { comprasService } from "../../services/compras.service";
 import { dinero } from "./formatoCompras";
@@ -11,14 +11,25 @@ import { dinero } from "./formatoCompras";
  * que ofrece y su foto; abajo total, tiempo de entrega, crédito y
  * observaciones.
  *
- * Si llega `onElegir`, abajo de cada proveedor sale el botón para elegirlo.
+ * Si llega `onElegir`, abajo de cada proveedor sale un botón ("Sugerir X" para
+ * quien pidió, "Decidir X" para Compras: lo dice `accion`).
+ * `elegidaId` es la que decidió Compras (o eligió el solicitante, en las
+ * viejas) y `sugeridaId` la que sugirió quien pidió.
  * Si llega `impacto`, abajo del total sale cuánto descontaría cada opción del
- * presupuesto del área (sin IVA, en pesos) y cuánto le quedaría este mes.
+ * presupuesto del área (sin IVA, en pesos) al autorizarse la orden de compra.
  */
 
 const cantidadTexto = (n) => (n == null ? "—" : Number(n).toLocaleString("es-MX", { maximumFractionDigits: 3 }));
 
-export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir, eligiendo = null, impacto = null }) {
+export default function Comparativo({
+  cotizacion: c,
+  elegidaId = null,
+  sugeridaId = null,
+  onElegir,
+  accion = "Elegir",
+  eligiendo = null,
+  impacto = null,
+}) {
   if (!c) return null;
   const cargar = (a) => () => comprasService.getArchivoCotizacion(a.id);
   const celda = "px-3 py-2 border border-gray-200 align-top";
@@ -39,6 +50,12 @@ export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir,
                     {o.proveedor}
                     {o.id === elegidaId && <CheckCircle2 className="w-4 h-4" />}
                   </div>
+                  {o.id === sugeridaId && (
+                    <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-medium normal-case">
+                      <Lightbulb className="w-3 h-3" />
+                      Sugerida por quien pidió
+                    </span>
+                  )}
                 </th>
               ))}
             </tr>
@@ -132,7 +149,7 @@ export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir,
               <tr>
                 <td className={`${celda} text-right text-gray-600`} colSpan={3}>
                   Presupuesto del área
-                  <span className="block text-[11px] text-gray-400">sin IVA, en pesos</span>
+                  <span className="block text-[11px] text-gray-400">sin IVA, en pesos, al autorizarse la orden</span>
                 </td>
                 {c.opciones.map((o) => {
                   const i = impacto.opciones?.[o.id];
@@ -146,7 +163,7 @@ export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir,
                   }
                   return (
                     <td key={o.id} colSpan={2} className={`${celda} text-right ${i.rebasa ? "bg-red-50" : ""}`}>
-                      <span className="text-gray-700">Descuenta {dinero(i.monto)}</span>
+                      <span className="text-gray-700">Descontaría {dinero(i.monto)}</span>
                       {impacto.saldo?.configurado && (
                         <span className={`block text-xs ${i.rebasa ? "text-red-700 font-medium" : "text-gray-500"}`}>
                           {i.rebasa ? "Rebasa: quedaría en " : "Quedarían "}
@@ -197,7 +214,7 @@ export default function Comparativo({ cotizacion: c, elegidaId = null, onElegir,
                       className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
                     >
                       {eligiendo === o.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      Elegir {o.proveedor}
+                      {accion} {o.proveedor}
                     </button>
                   </td>
                 ))}

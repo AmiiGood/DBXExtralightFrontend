@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Scale, Loader2, X, Inbox, Hourglass, CheckCircle2, AlertTriangle, History, FileEdit } from "lucide-react";
+import {
+  Scale, Loader2, X, Inbox, Hourglass, CheckCircle2, AlertTriangle, History, FileEdit, Lightbulb, BadgeCheck,
+} from "lucide-react";
 import { comprasService } from "../../services/compras.service";
 import ArchivoCompras from "../../components/compras/ArchivoCompras";
 import Comparativo from "../../components/compras/Comparativo";
@@ -13,18 +15,22 @@ import EditorCotizacion from "../../components/compras/EditorCotizacion";
  *
  * La bandeja del agente: las solicitudes aprobadas cuyo ticket tiene asignado
  * en osTicket (el jefe de Compras ve todas). Aquí captura las opciones de
- * proveedores y se las manda a quien pidió, que elige desde Solicitudes de
- * Compra.
+ * proveedores y se las manda a quien pidió, que da su sugerencia técnica desde
+ * Solicitudes de Compra. La decisión es de Compras: puede ser otra opción
+ * (diciendo por qué) o sin esperar la sugerencia.
  *
  * El asignado se lee de osTicket: si reasignan el ticket allá, la solicitud se
  * mueve sola de bandeja. Acepta ?vista=…&id=N para los correos.
  */
 
 const PESTANAS = [
-  { id: "por-cotizar", texto: "Por cotizar", icono: Inbox },
-  { id: "esperando", texto: "Esperando elección", icono: Hourglass },
-  { id: "elegidas", texto: "Proveedor elegido", icono: CheckCircle2 },
+  { id: "por-cotizar", texto: "Por cotizar", icono: Inbox, urgente: true },
+  { id: "esperando", texto: "Esperando sugerencia", icono: Hourglass },
+  { id: "por-decidir", texto: "Por decidir", icono: Lightbulb, urgente: true },
+  { id: "decididas", texto: "Decididas", icono: CheckCircle2 },
 ];
+// Los correos de antes traen ?vista=elegidas
+const ALIAS = { elegidas: "decididas" };
 
 const EVENTOS = {
   CREADA: "Solicitud enviada",
@@ -32,6 +38,8 @@ const EVENTOS = {
   ENVIADA: "Ticket creado en Compras",
   COTIZADA: "Opciones enviadas",
   OTRAS_OPCIONES: "Pidió otras opciones",
+  SUGERIDA: "Dio su sugerencia técnica",
+  DECIDIDA: "Compras decidió",
   ELEGIDA: "Eligió proveedor",
 };
 
@@ -55,6 +63,28 @@ function Detalle({ id, onCerrar, onCambio }) {
   const [aviso, setAviso] = useState(null);
   // Subirlo vuelve a pedir la solicitud (después de mandar opciones)
   const [version, setVersion] = useState(0);
+  // Decidir: la opción que se va a confirmar y por qué
+  const [porDecidir, setPorDecidir] = useState(null);
+  const [nota, setNota] = useState("");
+  const [decidiendo, setDecidiendo] = useState(false);
+  const [errorDecision, setErrorDecision] = useState(null);
+
+  async function decidir() {
+    setDecidiendo(true);
+    setErrorDecision(null);
+    try {
+      const r = await comprasService.decidirCotizacion(id, { opcionId: porDecidir.id, nota });
+      setAviso(r.message);
+      setPorDecidir(null);
+      setNota("");
+      setVersion((v) => v + 1);
+      onCambio();
+    } catch (e) {
+      setErrorDecision(mensajeError(e));
+    } finally {
+      setDecidiendo(false);
+    }
+  }
 
   useEffect(() => {
     let vivo = true;
@@ -167,12 +197,108 @@ function Detalle({ id, onCerrar, onCambio }) {
             {sol.enviada && (
               <div>
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  {sol.estado === "ELEGIDA" ? "Opciones enviadas · ya eligió" : "Opciones enviadas · esperando que elija"}
+                  {
+                    {
+                      COTIZADA: "Opciones enviadas · esperando la sugerencia de quien pidió",
+                      SUGERIDA: "Opciones enviadas · ya sugirió, te toca decidir",
+                      DECIDIDA: "Opciones enviadas · decidida",
+                      ELEGIDA: "Opciones enviadas · ya eligió",
+                    }[sol.estado]
+                  }
                 </h3>
                 <p className="text-xs text-gray-500 mb-2">
                   Las mandó {sol.enviada.enviada_por_nombre} el {fecha(sol.enviada.enviada_en)}
                 </p>
-                <Comparativo cotizacion={sol.enviada} elegidaId={sol.opcion_elegida_id} />
+
+                {sol.opcion_sugerida_id && (
+                  <div className="mb-3 text-sm text-indigo-800 bg-indigo-50 rounded-lg px-3 py-2">
+                    <Lightbulb className="w-4 h-4 inline -mt-0.5 mr-1" />
+                    <b>{sol.solicitante_nombre}</b> sugiere{" "}
+                    <b>{sol.enviada.opciones.find((o) => o.id === sol.opcion_sugerida_id)?.proveedor}</b> ·{" "}
+                    {fecha(sol.sugerido_en)}
+                    {sol.sugerencia ? (
+                      <span className="block mt-0.5">Su opinión técnica: “{sol.sugerencia}”</span>
+                    ) : (
+                      <span className="block mt-0.5 text-indigo-700/70">No escribió por qué.</span>
+                    )}
+                  </div>
+                )}
+                {sol.estado === "COTIZADA" && sol.permisos.decidir && (
+                  <p className="mb-3 text-xs text-gray-500">
+                    Puedes decidir sin esperar la sugerencia; queda registrado que fue así.
+                  </p>
+                )}
+
+                <Comparativo
+                  cotizacion={sol.enviada}
+                  elegidaId={sol.opcion_elegida_id}
+                  sugeridaId={sol.opcion_sugerida_id}
+                  impacto={sol.impacto}
+                  accion="Decidir"
+                  onElegir={sol.permisos.decidir && !porDecidir ? (o) => { setPorDecidir(o); setErrorDecision(null); } : undefined}
+                />
+
+                {porDecidir && (
+                  <div className="mt-3 border border-green-200 bg-green-50/50 rounded-lg p-3 space-y-2">
+                    <p className="text-sm text-gray-800">
+                      Vas a decidir a <b>{porDecidir.proveedor}</b> por{" "}
+                      <b>{dinero(porDecidir.total, porDecidir.moneda)}</b>
+                      {sol.enviada.incluye_iva ? " con IVA" : " + IVA"}.
+                      {!porDecidir.completa && " Ojo: no cotizó todas las partidas."}
+                    </p>
+                    {sol.opcion_sugerida_id && sol.opcion_sugerida_id !== porDecidir.id && (
+                      <p className="text-sm text-amber-800 bg-amber-50 rounded-md px-2 py-1">
+                        No es la que sugirió quien pidió: escribe por qué, se lo hacemos saber.
+                      </p>
+                    )}
+                    <textarea
+                      value={nota}
+                      onChange={(e) => setNota(e.target.value)}
+                      rows={2}
+                      maxLength={1000}
+                      placeholder={
+                        sol.opcion_sugerida_id && sol.opcion_sugerida_id !== porDecidir.id
+                          ? "¿Por qué esta opción y no la sugerida? (obligatorio)"
+                          : "Comentario para quien pidió (opcional)"
+                      }
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+                    />
+                    {errorDecision && <p className="text-sm text-red-700">{errorDecision}</p>}
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setPorDecidir(null);
+                          setErrorDecision(null);
+                        }}
+                        className="px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100"
+                      >
+                        Volver
+                      </button>
+                      <button
+                        disabled={
+                          decidiendo ||
+                          (sol.opcion_sugerida_id && sol.opcion_sugerida_id !== porDecidir.id && !nota.trim())
+                        }
+                        onClick={decidir}
+                        className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {decidiendo ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                        Confirmar decisión
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {sol.estado === "DECIDIDA" && (
+                  <div className="mt-3 text-sm text-teal-800 bg-teal-50 rounded-lg px-3 py-2">
+                    <BadgeCheck className="w-4 h-4 inline -mt-0.5 mr-1" />
+                    {sol.elegido_por_nombre || "Compras"} decidió{" "}
+                    <b>{sol.enviada.opciones.find((o) => o.id === sol.opcion_elegida_id)?.proveedor}</b> por{" "}
+                    <b>{dinero(sol.monto_elegido, sol.moneda_elegida)}</b>
+                    {sol.enviada.incluye_iva ? " con IVA" : " + IVA"} · {fecha(sol.elegido_en)}
+                    {sol.decision_nota && <span className="block mt-0.5">“{sol.decision_nota}”</span>}
+                  </div>
+                )}
                 {sol.estado === "ELEGIDA" && (
                   <p className="mt-3 text-sm text-green-800 bg-green-50 rounded-lg px-3 py-2">
                     Eligió{" "}
@@ -230,7 +356,8 @@ export default function CotizacionesComprasPage() {
   const [datos, setDatos] = useState(null);
   const [error, setError] = useState(null);
 
-  const vista = PESTANAS.some((p) => p.id === params.get("vista")) ? params.get("vista") : "por-cotizar";
+  const pedida = ALIAS[params.get("vista")] || params.get("vista");
+  const vista = PESTANAS.some((p) => p.id === pedida) ? pedida : "por-cotizar";
   const abierta = params.get("id") ? Number(params.get("id")) : null;
 
   const cambiarParams = (cambios) => {
@@ -304,7 +431,7 @@ export default function CotizacionesComprasPage() {
               <Icono className="w-4 h-4" />
               {p.texto}
               {n > 0 && (
-                <span className={`px-1.5 py-0.5 text-xs rounded-full text-white ${p.id === "por-cotizar" ? "bg-amber-500" : "bg-gray-400"}`}>
+                <span className={`px-1.5 py-0.5 text-xs rounded-full text-white ${p.urgente ? "bg-amber-500" : "bg-gray-400"}`}>
                   {n}
                 </span>
               )}
@@ -320,11 +447,14 @@ export default function CotizacionesComprasPage() {
           </div>
         ) : datos.filas.length === 0 ? (
           <div className="py-12 text-center text-sm text-gray-400">
-            {vista === "por-cotizar"
-              ? "No tienes solicitudes por cotizar"
-              : vista === "esperando"
-                ? "No hay opciones esperando a que elijan"
-                : "Todavía no eligen proveedor en ninguna"}
+            {
+              {
+                "por-cotizar": "No tienes solicitudes por cotizar",
+                esperando: "No hay opciones esperando la sugerencia de quien pidió",
+                "por-decidir": "No hay sugerencias esperando tu decisión",
+                decididas: "Todavía no hay ninguna decidida",
+              }[vista]
+            }
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -335,7 +465,14 @@ export default function CotizacionesComprasPage() {
                 <th className="px-4 py-2.5 font-medium">Pidió</th>
                 {todas && <th className="px-4 py-2.5 font-medium">Asignado</th>}
                 <th className="px-4 py-2.5 font-medium">
-                  {vista === "por-cotizar" ? "En Compras desde" : vista === "esperando" ? "Opciones enviadas" : "Eligió"}
+                  {
+                    {
+                      "por-cotizar": "En Compras desde",
+                      esperando: "Opciones enviadas",
+                      "por-decidir": "Sugirió",
+                      decididas: "Decidida",
+                    }[vista]
+                  }
                 </th>
               </tr>
             </thead>
@@ -383,12 +520,17 @@ export default function CotizacionesComprasPage() {
                     </td>
                   )}
                   <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">
-                    {vista === "elegidas" ? (
+                    {vista === "decididas" ? (
                       <>
                         <span className="text-gray-900">{s.proveedor_elegido}</span>
                         <span className="block text-xs">
                           {dinero(s.monto_elegido, s.moneda_elegida)} · {fecha(s.elegido_en)}
                         </span>
+                      </>
+                    ) : vista === "por-decidir" ? (
+                      <>
+                        <span className="text-gray-900">{s.proveedor_sugerido}</span>
+                        <span className="block text-xs text-amber-600">{hace(s.sugerido_en)}</span>
                       </>
                     ) : (
                       <>

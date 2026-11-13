@@ -145,10 +145,11 @@ export const comprasService = {
   },
 
   // -------------------------------------------------------------------------
-  // Cotizaciones: Compras manda opciones de proveedores, quien pidió elige
+  // Cotizaciones: Compras manda opciones de proveedores, quien pidió sugiere
+  // una y Compras decide
   // -------------------------------------------------------------------------
 
-  /** @param {String} vista  por-cotizar | esperando | elegidas */
+  /** @param {String} vista  por-cotizar | esperando | por-decidir | decididas */
   getCotizaciones: async (vista = "por-cotizar") => {
     const { data } = await api.get(`/compras/cotizaciones?vista=${vista}`);
     return data.data;
@@ -196,9 +197,15 @@ export const comprasService = {
     return data;
   },
 
-  /** Quien pidió elige una opción. */
-  elegir: async (id, { opcionId, comentario }) => {
-    const { data } = await api.post(`/compras/solicitudes/${id}/elegir`, { opcionId, comentario });
+  /** Compras decide la opción (nota obligatoria si no es la sugerida). */
+  decidirCotizacion: async (id, { opcionId, nota }) => {
+    const { data } = await api.post(`/compras/cotizaciones/${id}/decidir`, { opcionId, nota });
+    return data;
+  },
+
+  /** Quien pidió sugiere una opción con su opinión técnica. */
+  sugerir: async (id, { opcionId, comentario }) => {
+    const { data } = await api.post(`/compras/solicitudes/${id}/sugerir`, { opcionId, comentario });
     return data;
   },
 

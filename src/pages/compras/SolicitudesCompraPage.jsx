@@ -21,6 +21,8 @@ import {
   Scale,
   BadgeCheck,
   RotateCcw,
+  Hourglass,
+  Lightbulb,
 } from "lucide-react";
 import { comprasService } from "../../services/compras.service";
 import ArchivoCompras from "../../components/compras/ArchivoCompras";
@@ -46,7 +48,10 @@ const ESTADOS = {
   RECHAZADA: { texto: "Rechazada", clase: "bg-red-50 text-red-700 border-red-200", icono: XCircle },
   CANCELADA: { texto: "Cancelada", clase: "bg-gray-50 text-gray-500 border-gray-200", icono: Ban },
   EN_COMPRAS: { texto: "En Compras", clase: "bg-blue-50 text-blue-700 border-blue-200", icono: Send },
-  COTIZADA: { texto: "Elige proveedor", clase: "bg-violet-50 text-violet-700 border-violet-200", icono: Scale },
+  COTIZADA: { texto: "Da tu sugerencia", clase: "bg-violet-50 text-violet-700 border-violet-200", icono: Scale },
+  SUGERIDA: { texto: "Compras decide", clase: "bg-indigo-50 text-indigo-700 border-indigo-200", icono: Hourglass },
+  DECIDIDA: { texto: "Compras decidió", clase: "bg-teal-50 text-teal-700 border-teal-200", icono: BadgeCheck },
+  // Las de antes del 13-nov-2026: las elegía quien pidió
   ELEGIDA: { texto: "Proveedor elegido", clase: "bg-teal-50 text-teal-700 border-teal-200", icono: BadgeCheck },
 };
 
@@ -59,6 +64,8 @@ const EVENTOS = {
   ERROR_ENVIO: "No se pudo crear el ticket",
   COTIZADA: "Compras mandó opciones",
   OTRAS_OPCIONES: "Pidió otras opciones",
+  SUGERIDA: "Dio su sugerencia técnica",
+  DECIDIDA: "Compras decidió",
   ELEGIDA: "Eligió proveedor",
 };
 
@@ -319,9 +326,9 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
   const [rechazando, setRechazando] = useState(false);
   const [trabajando, setTrabajando] = useState(false);
   const [aviso, setAviso] = useState(null);
-  // Elegir proveedor: la opción que se va a confirmar y, aparte, pedir otras
-  const [porElegir, setPorElegir] = useState(null);
-  const [notaEleccion, setNotaEleccion] = useState("");
+  // Sugerir proveedor: la opción que se va a confirmar y, aparte, pedir otras
+  const [porSugerir, setPorSugerir] = useState(null);
+  const [notaSugerencia, setNotaSugerencia] = useState("");
   const [pidiendoOtras, setPidiendoOtras] = useState(false);
   const [motivo, setMotivo] = useState("");
 
@@ -345,8 +352,8 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
       setAviso({ ok: true, texto: r.message });
       setRechazando(false);
       setComentario("");
-      setPorElegir(null);
-      setNotaEleccion("");
+      setPorSugerir(null);
+      setNotaSugerencia("");
       setPidiendoOtras(false);
       setMotivo("");
       await cargar();
@@ -391,14 +398,14 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
                   : "Aprobada. Se está creando el ticket en Compras."}
             </p>
           )}
-          {["EN_COMPRAS", "COTIZADA", "ELEGIDA"].includes(sol.estado) && sol.osticket_numero && (
+          {["EN_COMPRAS", "COTIZADA", "SUGERIDA", "DECIDIDA", "ELEGIDA"].includes(sol.estado) && sol.osticket_numero && (
             <p className="text-sm text-blue-700 bg-blue-50 rounded-lg px-3 py-2">
               Ticket de Compras <b>{sol.osticket_numero}</b>
               {sol.asignado_nombre && <> · lo atiende {sol.asignado_nombre}</>}
               {sol.osticket_estado && <> · {sol.osticket_estado}</>}
               {sol.estado === "EN_COMPRAS" && (
                 <span className="block text-xs text-blue-600/80 mt-0.5">
-                  Cuando Compras tenga opciones de proveedores te llegan aquí para que elijas.
+                  Cuando Compras tenga opciones de proveedores te llegan aquí para que des tu sugerencia técnica.
                 </span>
               )}
             </p>
@@ -406,15 +413,56 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
 
           <p className="text-sm text-gray-800 whitespace-pre-wrap">{sol.detalle}</p>
 
-          {/* El gerente lo ve al aprobar; quien pidió, mientras espera y al elegir */}
+          {/* El gerente lo ve al aprobar; quien pidió, mientras espera y al sugerir */}
           {sol.presupuesto && <PresupuestoArea saldo={sol.presupuesto} area={sol.area_nombre} />}
 
           {/* --- Opciones de Compras --- */}
           {sol.cotizacion && (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                {sol.estado === "ELEGIDA" ? "Opciones de Compras" : "Compras te mandó estas opciones"}
+                {sol.estado === "COTIZADA" ? "Compras te mandó estas opciones" : "Opciones de Compras"}
               </h3>
+              {sol.estado === "COTIZADA" && sol.permisos.sugerir && (
+                <p className="text-sm text-violet-800 bg-violet-50 rounded-lg px-3 py-2">
+                  Sugiere la opción que técnicamente te sirve y explica por qué. Compras toma en cuenta tu sugerencia y
+                  decide.
+                </p>
+              )}
+              {sol.estado === "SUGERIDA" && (
+                <p className="text-sm text-indigo-800 bg-indigo-50 rounded-lg px-3 py-2">
+                  <Lightbulb className="w-4 h-4 inline -mt-0.5 mr-1" />
+                  {sol.permisos.sugerir ? "Sugeriste" : `${sol.solicitante_nombre} sugirió`}{" "}
+                  <b>{sol.cotizacion.opciones.find((o) => o.id === sol.opcion_sugerida_id)?.proveedor}</b> el{" "}
+                  {fecha(sol.sugerido_en)}
+                  {sol.sugerencia && <> · “{sol.sugerencia}”</>}. Ahora Compras decide.
+                  {sol.permisos.sugerir && (
+                    <span className="block text-xs text-indigo-700/80 mt-0.5">
+                      Mientras Compras no decida, puedes cambiar tu sugerencia o pedir otras opciones.
+                    </span>
+                  )}
+                </p>
+              )}
+              {sol.estado === "DECIDIDA" && (
+                <div className="text-sm text-teal-800 bg-teal-50 rounded-lg px-3 py-2">
+                  <BadgeCheck className="w-4 h-4 inline -mt-0.5 mr-1" />
+                  {sol.elegido_por_nombre || "Compras"} decidió{" "}
+                  <b>{sol.cotizacion.opciones.find((o) => o.id === sol.opcion_elegida_id)?.proveedor}</b> por{" "}
+                  <b>{dinero(sol.monto_elegido, sol.moneda_elegida)}</b>
+                  {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"} el {fecha(sol.elegido_en)}.
+                  {sol.opcion_sugerida_id && sol.opcion_sugerida_id !== sol.opcion_elegida_id && (
+                    <span className="block mt-0.5">
+                      Se había sugerido a {sol.cotizacion.opciones.find((o) => o.id === sol.opcion_sugerida_id)?.proveedor}.
+                      {sol.decision_nota && <> Compras explicó: “{sol.decision_nota}”</>}
+                    </span>
+                  )}
+                  {(!sol.opcion_sugerida_id || sol.opcion_sugerida_id === sol.opcion_elegida_id) && sol.decision_nota && (
+                    <span className="block mt-0.5">Comentó: “{sol.decision_nota}”</span>
+                  )}
+                  <span className="block text-xs text-teal-700/80 mt-0.5">
+                    Lo siguiente es la orden de compra, sobre el mismo ticket.
+                  </span>
+                </div>
+              )}
               {sol.estado === "ELEGIDA" && (
                 <p className="text-sm text-teal-800 bg-teal-50 rounded-lg px-3 py-2">
                   Elegiste{" "}
@@ -431,57 +479,60 @@ function Detalle({ id, conexion, onCerrar, onCambio }) {
               <Comparativo
                 cotizacion={sol.cotizacion}
                 elegidaId={sol.opcion_elegida_id}
+                sugeridaId={sol.opcion_sugerida_id}
                 impacto={sol.impacto}
-                onElegir={sol.permisos.elegir && !porElegir && !pidiendoOtras ? setPorElegir : undefined}
+                accion="Sugerir"
+                onElegir={sol.permisos.sugerir && !porSugerir && !pidiendoOtras ? setPorSugerir : undefined}
               />
 
-              {porElegir && (
-                <div className="border border-green-200 bg-green-50/50 rounded-lg p-3 space-y-2">
+              {porSugerir && (
+                <div className="border border-violet-200 bg-violet-50/50 rounded-lg p-3 space-y-2">
                   <p className="text-sm text-gray-800">
-                    Vas a elegir a <b>{porElegir.proveedor}</b> por <b>{dinero(porElegir.total, porElegir.moneda)}</b>
+                    Vas a sugerir a <b>{porSugerir.proveedor}</b> por <b>{dinero(porSugerir.total, porSugerir.moneda)}</b>
                     {sol.cotizacion.incluye_iva ? " con IVA" : " + IVA"}.
-                    {!porElegir.completa && " Ojo: no cotizó todas las partidas."}
+                    {!porSugerir.completa && " Ojo: no cotizó todas las partidas."}
                   </p>
-                  {sol.impacto?.opciones?.[porElegir.id]?.monto != null && (
+                  {sol.impacto?.opciones?.[porSugerir.id]?.monto != null && (
                     <p
                       className={`text-sm rounded-md px-2 py-1 ${
-                        sol.impacto.opciones[porElegir.id].rebasa ? "bg-red-100 text-red-800" : "text-gray-600"
+                        sol.impacto.opciones[porSugerir.id].rebasa ? "bg-red-100 text-red-800" : "text-gray-600"
                       }`}
                     >
-                      Se descuentan {dinero(sol.impacto.opciones[porElegir.id].monto)} del presupuesto de tu área.
+                      Si Compras la decide, al autorizarse la orden de compra se descontarían{" "}
+                      {dinero(sol.impacto.opciones[porSugerir.id].monto)} del presupuesto de tu área.
                       {sol.impacto.saldo?.configurado &&
-                        (sol.impacto.opciones[porElegir.id].rebasa
-                          ? ` Rebasa lo disponible: quedaría en ${dinero(sol.impacto.opciones[porElegir.id].quedaMes)} este mes y se le avisará a tu gerente. Puedes elegirla de todos modos.`
-                          : ` Te quedarían ${dinero(sol.impacto.opciones[porElegir.id].quedaMes)} este mes.`)}
+                        (sol.impacto.opciones[porSugerir.id].rebasa
+                          ? ` Hoy rebasaría lo disponible: quedaría en ${dinero(sol.impacto.opciones[porSugerir.id].quedaMes)} este mes.`
+                          : ` Hoy te quedarían ${dinero(sol.impacto.opciones[porSugerir.id].quedaMes)} este mes.`)}
                     </p>
                   )}
                   <textarea
-                    value={notaEleccion}
-                    onChange={(e) => setNotaEleccion(e.target.value)}
-                    rows={2}
+                    value={notaSugerencia}
+                    onChange={(e) => setNotaSugerencia(e.target.value)}
+                    rows={3}
                     maxLength={1000}
-                    placeholder="Comentario para Compras (opcional)"
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-200"
+                    placeholder="Tu opinión técnica para Compras: ¿por qué esta opción? (calidad, compatibilidad, marca, tiempo de entrega…)"
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-violet-200"
                   />
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setPorElegir(null)} className="px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100">
+                    <button onClick={() => setPorSugerir(null)} className="px-4 py-2 text-sm text-gray-600 rounded-lg hover:bg-gray-100">
                       Volver
                     </button>
                     <button
                       disabled={trabajando}
                       onClick={() =>
-                        accion(() => comprasService.elegir(sol.id, { opcionId: porElegir.id, comentario: notaEleccion }))
+                        accion(() => comprasService.sugerir(sol.id, { opcionId: porSugerir.id, comentario: notaSugerencia }))
                       }
-                      className="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 text-white rounded-lg hover:bg-violet-700 disabled:opacity-50"
                     >
-                      {trabajando ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
-                      Confirmar
+                      {trabajando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lightbulb className="w-4 h-4" />}
+                      Mandar sugerencia
                     </button>
                   </div>
                 </div>
               )}
 
-              {sol.permisos.elegir && !porElegir && (
+              {sol.permisos.sugerir && !porSugerir && (
                 pidiendoOtras ? (
                   <div className="border border-amber-200 bg-amber-50/50 rounded-lg p-3 space-y-2">
                     <textarea
@@ -757,8 +808,8 @@ export default function SolicitudesCompraPage() {
         <div className="flex items-center gap-2 text-sm text-violet-800 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3">
           <Scale className="w-4 h-4 shrink-0" />
           {contexto.porElegir === 1
-            ? "Compras te mandó opciones de proveedores en una solicitud: ábrela y elige la mejor."
-            : `Compras te mandó opciones de proveedores en ${contexto.porElegir} solicitudes: ábrelas y elige la mejor.`}
+            ? "Compras te mandó opciones de proveedores en una solicitud: ábrela y da tu sugerencia técnica."
+            : `Compras te mandó opciones de proveedores en ${contexto.porElegir} solicitudes: ábrelas y da tu sugerencia técnica.`}
         </div>
       )}
 
@@ -850,7 +901,7 @@ export default function SolicitudesCompraPage() {
                   <td className="px-4 py-2.5 whitespace-nowrap">
                     <Estado estado={s.estado} />
                     {s.osticket_numero && <span className="ml-2 text-xs text-gray-500">{s.osticket_numero}</span>}
-                    {s.estado === "ELEGIDA" && s.monto_elegido != null && (
+                    {["DECIDIDA", "ELEGIDA"].includes(s.estado) && s.monto_elegido != null && (
                       <span className="block text-xs text-gray-600 mt-0.5">{dinero(s.monto_elegido, s.moneda_elegida)}</span>
                     )}
                   </td>
