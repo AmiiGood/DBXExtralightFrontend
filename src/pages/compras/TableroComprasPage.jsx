@@ -14,6 +14,10 @@ import { exportarTableroCompras } from "../../utils/exportarTableroCompras";
  * capturados. Todo se puede ver en pesos o en dólares (FIX de Banxico del día
  * de cada formato; el presupuesto, con el FIX más reciente).
  *
+ * Dos gráficas siguen los renglones del P&L de Finanzas (MANUTENZIONE y ALTRI
+ * COSTI FISSI): el gasto de las cuentas de cada renglón, juntando las que
+ * tienen el mismo concepto. Una cuenta puede estar en los dos.
+ *
  * Gráficas: una serie cada una, en el azul del DBX. El rojo solo marca un área
  * que rebasó su presupuesto, y siempre va con la palabra "Rebasa".
  */
@@ -21,6 +25,8 @@ import { exportarTableroCompras } from "../../utils/exportarTableroCompras";
 const AZUL = "#236093";
 const PISTA = "#e5e7eb";
 const ROJO = "#b42318";
+// Los renglones del P&L vienen en italiano (así los usa Finproject)
+const EN_ESPANOL = { MANUTENZIONE: "mantenimiento", "ALTRI COSTI FISSI": "otros costos fijos" };
 const MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
 
 const hoy = () => new Date().toLocaleDateString("en-CA");
@@ -53,6 +59,49 @@ function Tarjeta({ titulo, nota, children, className = "" }) {
       {!nota && <div className="mb-3" />}
       {children}
     </section>
+  );
+}
+
+/** Un renglón del P&L: gasto por concepto, con los conceptos sin gasto al final. */
+function GrupoCuentas({ g, moneda, sinCuenta }) {
+  const titulo = g.grupo.charAt(0) + g.grupo.slice(1).toLowerCase();
+  const max = Math.max(1, ...g.conceptos.map((c) => c.total));
+  const nota = [
+    `${dinero(g.total, moneda)} en ${g.n} ${g.n === 1 ? "compra" : "compras"} · por concepto, con las cuentas de Finanzas`,
+    sinCuenta ? `${sinCuenta} ${sinCuenta === 1 ? "compra sin cuenta capturada no entra" : "compras sin cuenta capturada no entran"}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  return (
+    <Tarjeta titulo={`${titulo}${EN_ESPANOL[g.grupo] ? ` (${EN_ESPANOL[g.grupo]})` : ""}`} nota={nota}>
+      <ul className="space-y-2.5">
+        {g.conceptos.map((c) => {
+          const cuentas = c.cuentas.map((x) => `${x.codigo} ${x.nombre}`).join("\n");
+          const resumen = c.total
+            ? `${dinero(c.total, moneda)} en ${c.n} ${c.n === 1 ? "compra" : "compras"}`
+            : "Sin gasto en el periodo";
+          return (
+            <li key={c.clave} title={`${c.nombre}\n${resumen}\n\n${cuentas}`}>
+              <div className="flex items-baseline justify-between gap-2 text-sm">
+                <span className={`truncate ${c.total ? "text-gray-700" : "text-gray-400"}`}>{c.nombre}</span>
+                <span className="text-xs text-gray-500 tabular-nums whitespace-nowrap">
+                  {c.total ? (
+                    <>
+                      <b className="text-gray-900 font-semibold">{corto(c.total, moneda)}</b> · {c.n}
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                </span>
+              </div>
+              {c.total > 0 && (
+                <div className="h-2.5 mt-1 rounded" style={{ width: `max(${(c.total / max) * 100}%, 3px)`, background: AZUL }} />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Tarjeta>
   );
 }
 
@@ -152,6 +201,30 @@ export default function TableroComprasPage() {
   const porTipo = [...tipos.values()].sort((a, b) => b.total - a.total);
   const maxTipo = Math.max(1, ...porTipo.map((t) => t.total));
 
+  // Renglones del P&L (Finanzas): cada uno por su lado; una cuenta puede estar en varios
+  const sinCuenta = conMonto.filter((f) => !f.cuenta).length;
+  const grupos = [];
+  for (const r of datos?.gruposCuenta || []) {
+    let g = grupos.find((x) => x.grupo === r.grupo);
+    if (!g) grupos.push((g = { grupo: r.grupo, conceptos: [], porCuenta: new Map(), total: 0, n: 0 }));
+    const clave = r.concepto.trim().toLowerCase();
+    let c = g.conceptos.find((x) => x.clave === clave);
+    if (!c) g.conceptos.push((c = { clave, nombre: r.concepto, cuentas: [], total: 0, n: 0 }));
+    c.cuentas.push({ codigo: r.codigo, nombre: r.cuenta_nombre });
+    g.porCuenta.set(r.codigo, c);
+  }
+  for (const g of grupos) {
+    for (const f of conMonto) {
+      const c = g.porCuenta.get(f.cuenta);
+      if (!c) continue;
+      c.total += f[campo];
+      c.n += 1;
+      g.total += f[campo];
+      g.n += 1;
+    }
+    g.conceptos.sort((a, b) => b.total - a.total || a.nombre.localeCompare(b.nombre, "es"));
+  }
+
   const grandes = [...conMonto].sort((a, b) => b[campo] - a[campo]).slice(0, 10);
   const nombreArea = (datos?.areas || []).find((a) => String(a.id) === areaId)?.nombre;
 
@@ -168,6 +241,7 @@ export default function TableroComprasPage() {
       porArea,
       meses,
       porTipo,
+      grupos,
       formatos: conMonto,
       campo,
       notas: [
@@ -190,7 +264,7 @@ export default function TableroComprasPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Tablero de Compras</h1>
-            <p className="text-sm text-gray-500">Gasto autorizado contra presupuesto, por área, mes y tipo</p>
+            <p className="text-sm text-gray-500">Gasto autorizado contra presupuesto, por área, mes, renglón del P&L y tipo</p>
           </div>
         </div>
         <button
@@ -341,6 +415,14 @@ export default function TableroComprasPage() {
               )}
             </Tarjeta>
           </div>
+
+          {grupos.length > 0 && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {grupos.map((g) => (
+                <GrupoCuentas key={g.grupo} g={g} moneda={moneda} sinCuenta={sinCuenta} />
+              ))}
+            </div>
+          )}
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Tarjeta titulo="En qué se gasta" nota="Por tipo de compra (lo asigna Compras)">

@@ -17,7 +17,7 @@ function encabezar(hoja, columnas) {
   hoja.views = [{ state: "frozen", ySplit: 1 }];
 }
 
-export async function exportarTableroCompras({ moneda, kpis, porArea, meses, porTipo, formatos, campo, notas }) {
+export async function exportarTableroCompras({ moneda, kpis, porArea, meses, porTipo, grupos = [], formatos, campo, notas }) {
   const libro = new ExcelJS.Workbook();
   libro.created = new Date();
   const fmt = moneda === "USD" ? '"US$"#,##0.00' : '"$"#,##0.00';
@@ -59,6 +59,21 @@ export async function exportarTableroCompras({ moneda, kpis, porArea, meses, por
     { header: "Gasto", key: "total", width: 18, style: { numFmt: fmt } },
   ]);
   porTipo.forEach((t) => tipos.addRow({ ...t, total: cent(t.total) }));
+
+  // Un renglón del P&L por hoja; una cuenta puede salir en más de uno
+  for (const g of grupos) {
+    const hoja = libro.addWorksheet(g.grupo.charAt(0) + g.grupo.slice(1).toLowerCase());
+    encabezar(hoja, [
+      { header: "Concepto", key: "nombre", width: 36 },
+      { header: "Cuentas", key: "cuentas", width: 60 },
+      { header: "Compras", key: "n", width: 10 },
+      { header: "Gasto", key: "total", width: 18, style: { numFmt: fmt } },
+    ]);
+    for (const c of g.conceptos) {
+      hoja.addRow({ nombre: c.nombre, cuentas: c.cuentas.map((x) => `${x.codigo} ${x.nombre}`).join(", "), n: c.n, total: cent(c.total) });
+    }
+    hoja.addRow({ nombre: "Total", n: g.n, total: cent(g.total) }).font = { bold: true };
+  }
 
   const det = libro.addWorksheet("Compras");
   encabezar(det, [
